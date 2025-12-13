@@ -1,0 +1,162 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busqueda</title>
+    <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+    <header class="Encabezado">
+        <img src="img/logo.png" class="logo" id="logo">
+        <img src="fotoPerfil/perfil.png" class="perfil" id="perfil">
+    </header>
+
+    <main class="mainBusquedaC">
+        <div class="DivBusquedaC">
+            <img src="img/lupa.png" class="lupaC">
+            <input type="text" id="inputBusqueda" placeholder="Buscar">
+        </div>
+
+        <div class="divGenerosC">
+            <h3>Géneros</h3>
+            <div class="categorias" id="categorias"></div>
+        </div>
+    </main>
+
+    <nav class="navMovil">
+        <img src="img/home.png" id="btnHomeMovil">
+        <img src="img/busqueda.png" id="btnBuscarMovil">
+        <div class="iconoCampanaC">
+            <img src="img/notificacion.png" id="btnNotiMovil">
+            <span class="puntoRojo" id="puntoNuevo"></span>
+        </div>
+    </nav>
+
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+
+        const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${token}` };
+
+
+        // generos
+
+        async function cargarGeneros() {
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Libros/generos", { headers });
+                const generos = await resp.json();
+                const cont = document.getElementById("categorias");
+                cont.innerHTML = "";
+                generos.forEach(g => {
+                    const btn = document.createElement("button");
+                    btn.textContent = g;
+                    btn.onclick = () => window.location.href = `./generos.html?genero=${encodeURIComponent(g)}`;
+                    cont.appendChild(btn);
+                });
+            } catch (err) {
+                console.error("Error cargando géneros:", err);
+            }
+        }
+
+       
+        // buscador
+        function configurarBuscador() {
+            const input = document.getElementById("inputBusqueda");
+            let timeout = null;
+
+            input.addEventListener("input", () => {
+                const texto = input.value.trim().toLowerCase();
+                clearTimeout(timeout);
+
+                if (!texto) {
+                    const cont = document.getElementById("resultadosBusqueda");
+                    if (cont) cont.remove();
+                    return;
+                }
+
+                timeout = setTimeout(() => buscarLibros(texto), 350);
+            });
+        }
+
+        async function buscarLibros(texto) {
+            try {
+                const resp = await fetch(`https://myvexbooks2.duckdns.org/api/Libros/buscar/${texto}`, { headers });
+                const libros = await resp.json();
+                mostrarResultadosBusqueda(libros);
+            } catch (err) {
+                console.error("Error buscando libros:", err);
+            }
+        }
+
+        function mostrarResultadosBusqueda(libros) {
+            let cont = document.getElementById("resultadosBusqueda");
+            if (!cont) {
+                cont = document.createElement("div");
+                cont.id = "resultadosBusqueda";
+                cont.style.padding = "20px";
+                cont.style.background = "white";
+                cont.style.border = "1px solid #ccc";
+                cont.style.margin = "20px";
+                cont.style.borderRadius = "10px";
+                document.querySelector("main").prepend(cont);
+            }
+
+            cont.innerHTML = "<h2>Resultados</h2>";
+            if (!libros.length) { cont.innerHTML += "<p>No hay resultados.</p>"; return; }
+
+            libros.forEach(l => {
+                cont.innerHTML += `
+                    <div style="display:flex; gap:15px; margin-bottom:10px; cursor:pointer"
+                         onclick="window.location.href='libro.html?id=${l.idLibro}'">
+                        <img src="${l.portadaURL}" style="width:60px; height:90px; object-fit:cover">
+                        <div>
+                            <p><b>${l.titulo}</b></p>
+                            <p>${l.autor}</p>
+                            <p style="font-size:12px; opacity:0.7">${l.genero}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+
+        // cargar foto
+
+        async function cargarFotoPerfil() {
+            const img = document.getElementById("perfil");
+            if (!img) return;
+
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", { headers });
+                const data = await resp.json();
+                const url = data?.fotoURL ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL) : "fotoPerfil/perfil.png";
+                img.src = url + "?t=" + Date.now();
+                localStorage.setItem("fotoPerfilURL", url);
+            } catch (err) {
+                console.error("Error cargando foto de perfil:", err);
+                img.src = "fotoPerfil/perfil.png";
+            }
+        }
+
+
+        // navegacion
+        function configurarNavegacion() {
+            document.getElementById("perfil").onclick = () => window.location.href = "perfil.html";
+            document.getElementById("logo").onclick = () => window.location.href = "home.html";
+            document.getElementById("btnHomeMovil").onclick = () => window.location.href = "home.html";
+            document.getElementById("btnBuscarMovil").onclick = () => window.location.href = "busqueda.html";
+            document.getElementById("btnNotiMovil").onclick = () => window.location.href = "notificaciones.html";
+        }
+
+ 
+        // iniciar
+        document.addEventListener("DOMContentLoaded", async () => {
+            await cargarGeneros();
+            configurarBuscador();
+            cargarFotoPerfil();
+            configurarNavegacion();
+        });
+    </script>
+</body>
+</html>

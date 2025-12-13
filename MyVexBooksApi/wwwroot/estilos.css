@@ -1,0 +1,1791 @@
+﻿@font-face {
+    font-family: Brunson;
+    src: url('Honking Personal Use Only.ttf');
+}
+
+@keyframes latir {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.25);
+    }
+
+    50% {
+        transform: scale(1);
+    }
+
+    75% {
+        transform: scale(1.25);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+
+
+/* ============================================== */
+/*                    HTML Y BODY                 */
+/* ============================================== */
+html, body {
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    background-image: url(img/fondo.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.navMovil {
+    display: none;
+}
+
+
+
+
+
+/* ============================================== */
+/*       INICIO DE SESIÓN Y REGISTRARSE           */
+/* ============================================== */
+.mainSesionRegistro {
+    margin: 50px;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-left: 10%;
+}
+
+.iniciosesion {
+    width: 400px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+    .iniciosesion img {
+        width: 300px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .iniciosesion label {
+        font-family: 'Honking Personal Use Only';
+        letter-spacing: 0.5px;
+        color: #5C2603;
+        font-size: 14px;
+        margin: 5px 0;
+    }
+
+    .iniciosesion input {
+        font-family: 'Honking Personal Use Only';
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        width: 90%;
+        padding: 10px 15px;
+        margin: 5px 0;
+        border: solid 1px black;
+        border-radius: 25px;
+        filter: drop-shadow(0px 4px 1px rgba(0, 0, 0, 0.3));
+    }
+
+.DivContraseña {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+    .DivContraseña .icono {
+        width: 30px;
+        position: absolute;
+        top: 45px;
+        right: 25px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+
+/*BOTONES DE INICIO DE SESION, REGISTRARSE Y CANCELAR*/
+.botonesS {
+    width: 50%;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.botonesR {
+    margin: 20px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+    .botonesS input, .botonesR input {
+        font-family: 'Honking Personal Use Only';
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        background-color: white;
+        color: black;
+        border: solid 1px #5C2603;
+        border-radius: 25px;
+        width: 150px;
+        margin: 5px 0;
+        padding: 10px;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        cursor: pointer;
+    }
+
+.botonesS a {
+    font-family: 'Honking Personal Use Only';
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: #004373;
+    margin: 10px 0px;
+    display: block;
+}
+
+
+/*LOGO DE VEX*/
+.lateral {
+    height: 540px;
+    width: 500px;
+    margin-left: 100px;
+}
+
+    .lateral img {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(40px 20px 1px rgba(0, 0, 0, 0.3));
+        pointer-events: none;
+    }
+
+
+
+
+
+/* ============================================== */
+/*                     HOME                       */
+/* ============================================== */
+.Encabezado {
+    width: 100%;
+    height: 80px;
+    background-color: #C89D81;
+    border: solid 1px #5C2603;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.logo {
+    width: 80px;
+    margin-left: 40px;
+    filter: drop-shadow(8px 4px 1px rgba(0, 0, 0, 0.3));
+    cursor: pointer;
+}
+
+.perfil {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit:cover;
+    margin: 10px 40px 10px 20px;
+    filter: drop-shadow(4px 3px 1px rgba(0, 0, 0, 0.3));
+    cursor: pointer;
+}
+
+.divPerfil {
+    position: relative;
+}
+
+.perfilMenu {
+    background-color: white;
+    border: 1px solid #5C2603;
+    border-radius: 25px;
+    width: 100px;
+    top: 70px;
+    right: 10px;
+    padding: 5px;
+    display: none;
+    position: absolute;
+    z-index: 1;
+}
+
+    .perfilMenu.activo {
+        display: block;
+    }
+
+.cerrarSesion {
+    font-family: 'Honking Personal Use Only';
+    font-size: 10px;
+    background-color: transparent;
+    color: black;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.notificacion {
+    width: 35px;
+    height: auto;
+    margin: 10px 20px;
+    cursor: pointer;
+}
+
+.DivBusqueda {
+    position: relative;
+    border: none;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+}
+
+    .DivBusqueda input {
+        font-family: 'Honking Personal Use Only';
+        font-size: 14px;
+        background-color: white;
+        color: black;
+        border: solid 1px black;
+        border-radius: 25px;
+        height: 35px;
+        width: 450px;
+        padding-left: 50px;
+        outline: none;
+    }
+
+.lupa {
+    position: absolute;
+    width: 20px;
+    left: calc(50% - 250px + 20px);
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.divGeneros {
+    margin-right: 25%;
+    position: relative;
+}
+
+.Generos {
+    background: none;
+    font-family: 'Honking Personal Use Only';
+    font-size: 14px;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.flecha {
+    transition: transform 0.3s;
+}
+
+    .flecha.arriba {
+        transform: rotate(180deg);
+    }
+
+.menuGeneros {
+    background: #C79D85;
+    width: 380px;
+    height: 200px;
+    padding: 20px;
+    top: 45px;
+    left: 50%;
+    border: 2px solid #5C2603;
+    border-radius: 25px;
+    position: absolute;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    transform: translateX(-50%);
+    display: none;
+    z-index: 1;
+}
+
+    .menuGeneros button {
+        background: white;
+        font-family: 'Honking Personal Use Only';
+        font-size: 12px;
+        border: 1px solid #5C2603;
+        border-radius: 20px;
+        padding: 6px 0;
+        cursor: pointer;
+    }
+
+.divNotificaciones {
+    position: relative;
+    display: inline-block;
+}
+
+.iconoCampana {
+    position: relative;
+    cursor: pointer;
+}
+
+.notificacion {
+    width: 40px;
+}
+
+/* Punto rojo solo si hay mensajes */
+.puntoRojo {
+    background-color: red;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    top: 15px;
+    right: 25px;
+    position: absolute;
+    display: none;
+}
+
+.menuNotificaciones {
+    background: #C79D85;
+    width: 260px;
+    height: 250px;
+    top: 65px;
+    border: 2px solid #5C2603;
+    border-radius: 25px;
+    position: absolute;
+    transform: translateX(-40%);
+    display: none;
+    z-index: 1;
+}
+
+    .menuNotificaciones h3 {
+        font-family: 'Honking Personal Use Only';
+        background-color: #B28568;
+        font-size: 15px;
+        text-transform: uppercase;
+        border-bottom: 2px solid #5C2603;
+        border-radius: 25px 25px 0 0;
+        margin: 0;
+        padding: 10px;
+        user-select: none;
+    }
+
+.sinMensajes {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+    user-select: none;
+}
+
+.conMensajes {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    background: white;
+    border-bottom: 2px solid #5C2603;
+    margin: 0;
+    padding: 10px;
+    display: none;
+}
+
+
+.mainHome {
+    width: 95%;
+    max-width: 1400px;
+    margin: 20px auto;
+}
+
+.Seccion {
+    padding: 10px 0;
+    position: relative;
+}
+
+    .Seccion h2 {
+        font-family: 'Honking Personal Use Only';
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        margin-left: 40px;
+        user-select: none;
+    }
+
+.divFilaLibros {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.carrusel {
+    overflow: hidden;
+    width: 100%;
+    height: 230px;
+}
+
+
+.filaLibros {
+    display: flex;
+    gap: 70px;
+    transition: transform 0.4s ease;
+}
+
+.btnFlechaIzq,
+.btnFlechaDer {
+    background: #C89D81;
+    font-size: 25px;
+    width: 40px;
+    border: solid 1px #5C2603;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
+.libro {
+    max-width: 140px;
+    margin: 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.book {
+    min-width: 100px;
+    height: 150px;
+    border: 1px solid black;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.titulo {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    color: #5C2603;
+    text-align: center;
+    width: 100px;
+    height: 40px;
+    align-items: center;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* número máximo de líneas visibles */
+    overflow: hidden;
+}
+
+.autor {
+    font-family: 'Honking Personal Use Only';
+    font-size: 10px;
+    color: #5C2603;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: -2px;
+    width: 100px;
+    height: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+
+
+/* ============================================== */
+/*                    PERFIL                      */
+/* ============================================== */
+.mainPerfil {
+    width: 80%;
+    max-width: 1000px;
+    margin: 50px auto;
+    padding: 40px;
+    gap: 80px;
+    display: flex;
+    justify-content: center;
+}
+
+.circulo {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(8px 4px 1px rgba(0, 0, 0, 0.3));
+}
+
+.imgPerfil {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    object-fit: cover;
+    opacity: 0.7;
+}
+
+.lapiz {
+    width: 40px;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    border: 1px solid #5C2603;
+    border-radius: 50%;
+}
+
+.grupo {
+    margin: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.infoPerfil label {
+    font-family: 'Honking Personal Use Only';
+    letter-spacing: 0.5px;
+    color: #5C2603;
+    font-size: 14px;
+    margin: 5px 0;
+    width: 165px;
+    display: block;
+}
+
+.inputConIcono {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+    .inputConIcono input {
+        font-family: 'Honking Personal Use Only';
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        width: 350px;
+        padding: 10px 15px;
+        margin: 5px 0;
+        border: solid 1px black;
+        border-radius: 25px;
+        filter: drop-shadow(0px 4px 1px rgba(0, 0, 0, 0.3));
+    }
+
+    .inputConIcono .icono {
+        width: 30px;
+        position: absolute;
+        top: 12px;
+        right: 60px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+.btnEditarCampo {
+    width: 35px;
+    border: 1px solid #5C2603;
+    border-radius: 50%;
+    filter: drop-shadow(4px 4px 1px rgba(0, 0, 0, 0.3));
+    cursor: pointer;
+}
+
+.botones {
+    margin: 20px auto;
+    gap: 50px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+    position: relative;
+}
+
+.imgGuardar {
+    width: 30px;
+    user-select: none;
+}
+
+.guardar,
+.cancelar {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    background-color: white;
+    color: black;
+    border: solid 1px #5C2603;
+    border-radius: 25px;
+    width: 150px;
+    margin: 5px 0;
+    text-align: center;
+    text-decoration: none;
+    filter: drop-shadow(0px 4px 1px rgba(0, 0, 0, 0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.guardar {
+    padding: 5px;
+}
+
+.cancelar {
+    padding: 10px;
+}
+
+
+
+
+
+/* ============================================== */
+/*                    GÉNEROS                     */
+/* ============================================== */
+.mainGeneros {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    align-content: center;
+}
+
+    .mainGeneros h3 {
+        font-family: 'Honking Personal Use Only';
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        margin: 20px 0;
+    }
+
+.listaLibros {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 40px 25px;
+}
+
+.libroG {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.infoLibro {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+    .infoLibro p {
+        font-family: 'Honking Personal Use Only';
+        font-size: 10px;
+        color: #5C2603;
+        width: 100px;
+        height: 18px;
+        text-transform: uppercase;
+        text-align: start;
+        user-select: none;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spanL {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    color: #5C2603;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.likes, .lista {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+
+
+
+
+/* ============================================== */
+/*                      LIBRO                     */
+/* ============================================== */
+.mainLibro {
+    width: 90%;
+    max-width: 1200px;
+    margin: 50px auto;
+    display: flex;
+    justify-content: space-around;
+}
+
+.libroElegido {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.bookE {
+    min-width: 200px;
+    height: 300px;
+    border: 1px solid black;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.infoLibroE {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+    .infoLibroE p {
+        font-family: 'Honking Personal Use Only';
+        font-size: 15px;
+        color: #5C2603;
+        width: 150px;
+        margin: 5px;
+        text-transform: uppercase;
+        text-align: start;
+        user-select: none;
+    }
+
+.infoE {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spanLibroE {
+    font-family: 'Honking Personal Use Only';
+    font-size: 15px;
+    color: #5C2603;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+
+.likesE, .listaE {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.divLeer {
+    margin: 20px auto;
+    gap: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.imgLeer {
+    width: 30px;
+    user-select: none;
+}
+
+.leer {
+    font-family: 'Honking Personal Use Only';
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    background-color: white;
+    color: black;
+    border: solid 1px #5C2603;
+    border-radius: 25px;
+    width: 150px;
+    margin: 5px 0;
+    padding: 5px;
+    text-align: center;
+    text-decoration: none;
+    filter: drop-shadow(0px 4px 1px rgba(0, 0, 0, 0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.divLibroSC {
+    background-color: white;
+    width: 600px;
+    max-width: 90%;
+    height: 300px;
+    border: 2px solid #5C2603;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+.divBtnSC {
+    display: flex;
+}
+
+    .divBtnSC button {
+        background-color: white;
+        font-family: 'Honking Personal Use Only';
+        font-size: 15px;
+        padding: 12px;
+        border: none;
+        border-bottom: 2px solid #5C2603;
+        flex: 1;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .divBtnSC button:nth-of-type(1) {
+            border-right: 2px solid #5C2603;
+        }
+
+        .divBtnSC button.activo {
+            background: #C89D81;
+            color: black;
+        }
+
+.divSinopsis {
+    padding: 15px;
+}
+
+.divSinopsis,
+.divContenido {
+    display: none;
+    height: 300px;
+    overflow-y: auto;
+}
+
+    .divSinopsis.activo,
+    .divContenido.activo {
+        display: block;
+    }
+
+        .divSinopsis.activo p {
+            font-family: 'Honking Personal Use Only';
+            font-size: 12px;
+            color: black;
+            line-height: 1.5;
+            user-select: none;
+        }
+
+    .divContenido ul {
+        margin: 0;
+        padding-left: 0;
+        list-style: none;
+        user-select: none;
+    }
+
+    .divContenido li {
+        font-family: 'Honking Personal Use Only';
+        font-size: 12px;
+        color: black;
+        line-height: 1.4;
+        padding: 10px;
+        border-bottom: solid 1px #5C2603;
+    }
+
+
+
+
+
+/* ============================================== */
+/*                     LECTURA                    */
+/* ============================================== */
+.mainLectura {
+    width: 90%;
+    max-width: 1200px;
+    height: 450px;
+    margin: 20px auto;
+    align-content: center;
+}
+
+.divLectura {
+    background-color: white;
+    border: 1px solid #5C2603;
+    border-radius: 25px;
+    height: 450px;
+    max-height: 2000px;
+    padding: 20px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+    .divLectura h2 {
+        font-size: 20px;
+        margin: 0;
+    }
+
+    .divLectura h2, .divTexto p {
+        font-family: 'Honking Personal Use Only';
+        letter-spacing: 0.5px;
+        user-select: none;
+    }
+
+.divHeader {
+    width: 100%;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+}
+
+.spanLibroCap {
+    font-family: 'Honking Personal Use Only';
+    font-size: 16px;
+    gap: 5px;
+    color: #5C2603;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+
+.likesCap {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    cursor: pointer;
+}
+
+    .likesCap.latiendo {
+        animation: latir 0.6s infinite;
+    }
+
+
+.btnLista {
+    position: absolute;
+    right: 0;
+    width: 28px;
+    cursor: pointer;
+}
+
+.divTexto {
+    height: 350px;
+    margin: 10px 0;
+    padding-right: 15px;
+    overflow-y: auto;
+}
+
+    .divTexto p {
+        font-size: 12px;
+    }
+
+.sidebar {
+    background-color: #E1CABA;
+    border: solid 1px #5C2603;
+    border-radius: 25px;
+    width: 300px;
+    height: 100%;
+    top: 0;
+    right: 0;
+    position: absolute;
+    z-index: 1;
+    display: none;
+}
+
+
+.btnListaSidebar {
+    width: 28px;
+    left: 20px;
+    margin-top: 20px;
+    cursor: pointer;
+    position: absolute;
+}
+
+.portada {
+    background-color: blue;
+    width: 100px;
+    height: 140px;
+    margin: 12px auto;
+    display: block;
+}
+
+.sidebar h4 {
+    background-color: white;
+    font-family: 'Honking Personal Use Only';
+    font-size: 14px;
+    color: #5C2603;
+    margin: 0;
+    padding: 10px;
+    border: solid 1px #5C2603;
+    border-radius: 25px 25px 0 0;
+    text-align: center;
+    user-select: none;
+}
+
+.listaCapitulos {
+    background-color: white;
+    height: 57%;
+    margin: 0;
+    padding: 0;
+    border-radius: 0 0 25px 25px;
+    list-style: none;
+    user-select: none;
+    overflow-y: auto;
+}
+
+    .listaCapitulos li {
+        border-bottom: 1px solid #5C2603;
+        padding: 8px;
+        font-family: 'Honking Personal Use Only';
+        font-size: 12px;
+    }
+
+
+.continuar {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    background-color: white;
+    color: black;
+    border: solid 1px #5C2603;
+    border-radius: 25px;
+    width: 130px;
+    margin: 5px 0;
+    padding: 5px;
+    text-align: center;
+    text-decoration: none;
+    filter: drop-shadow(0px 4px 1px rgba(0, 0, 0, 0.3));
+    cursor: pointer;
+}
+
+
+
+
+
+/* ============================================== */
+/*                    BUSQUEDA                    */
+/* ============================================== */
+.mainBusqueda {
+    width: 80%;
+    max-width: 1000px;
+    margin: 50px auto;
+    padding: 40px;
+    align-content: center;
+}
+
+.DivBusquedaC {
+    width: 90%;
+    margin: 20px auto 0 auto;
+    padding: 20px;
+    position: relative;
+    border: none;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+}
+
+    .DivBusquedaC input {
+        font-family: 'Honking Personal Use Only';
+        font-size: 14px;
+        background-color: white;
+        color: black;
+        border: solid 1px black;
+        border-radius: 25px;
+        height: 35px;
+        width: 450px;
+        padding-left: 50px;
+        outline: none;
+    }
+
+.lupaC {
+    width: 18px;
+    user-select: none;
+    position: absolute;
+    left: calc(50% - 200px - 20px);
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.divGenerosC {
+    width: 95%;
+    margin: 0 20px;
+}
+
+    .divGenerosC h3 {
+        font-family: 'Honking Personal Use Only';
+        font-size: 18px;
+        margin: 15px 5px;
+    }
+
+.categorias {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 20px;
+    margin-top: 10px;
+}
+
+    .categorias button {
+        background-color: white;
+        color: black;
+        font-family: 'Honking Personal Use Only';
+        font-size: 12px;
+        border: 1px solid #5C2603;
+        border-radius: 25px;
+        padding: 6px 10px;
+        text-align: center;
+        filter: drop-shadow(0px 4px 1px rgba(0,0,0,0.3));
+        cursor: pointer;
+    }
+
+
+
+
+
+/* ============================================== */
+/*                 NOTIFICACIONES                 */
+/* ============================================== */
+.mainNotificaciones {
+    width: 100%;
+}
+
+.menuNotificacionesC {
+    background: #C79D85;
+    width: 100%;
+    height: auto;
+    top: 65px;
+    border: 2px solid #5C2603;
+}
+
+    .menuNotificacionesC h3 {
+        font-family: 'Honking Personal Use Only';
+        background-color: #B28568;
+        font-size: 15px;
+        border-bottom: 1px solid #5C2603;
+        margin: 0;
+        padding: 10px;
+        user-select: none;
+    }
+
+.sinMensajes {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    background: white;
+    margin: 0;
+    padding: 10px;
+    text-align: start;
+    user-select: none;
+}
+
+.conMensajes {
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    background: white;
+    border-bottom: 1px solid #5C2603;
+    margin: 0;
+    padding: 10px;
+    display: none;
+}
+
+
+
+
+
+
+/* ============================================== */
+/*               RESPONSIVE - CELULAR             */
+/* ============================================== */
+@media (max-width: 600px) {
+    /*BARRA DE NAVEGACIÓN MÓVIL*/
+    .navMovil {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: #C89D81;
+        border: solid 1px #5C2603;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        z-index: 10;
+    }
+
+        .navMovil img {
+            width: 30px;
+            padding: 15px 40px;
+            cursor: pointer;
+            filter: drop-shadow(3px 3px 1px rgba(0, 0, 0, 0.3));
+        }
+
+            .navMovil img:nth-of-type(2) {
+                border-right: solid 1px #5C2603;
+                border-left: solid 1px #5C2603;
+            }
+
+    .iconoCampanaC {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+        .iconoCampanaC img {
+            width: 30px;
+            padding: 15px 40px;
+            cursor: pointer;
+        }
+
+    /* Punto rojo */
+    .puntoRojo {
+        background-color: red;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        top: 18px;
+        right: 40px;
+        position: absolute;
+        display: none;
+    }
+
+
+
+    /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
+    .mainSesionRegistro {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+        padding: 20px 10px;
+    }
+
+    .lateral {
+        order: -1;
+        width: 70%;
+        height: auto;
+        margin: 0 0 20px 0;
+        text-align: center;
+    }
+
+        .lateral img {
+            width: 100%;
+            height: auto;
+            filter: none;
+        }
+
+    .iniciosesion {
+        width: 95%;
+        padding: 10px;
+    }
+
+        .iniciosesion img {
+            width: 65%;
+            margin: 10px auto 20px auto;
+        }
+
+        .iniciosesion label {
+            font-size: 13px;
+        }
+
+        .iniciosesion input {
+            width: 90%;
+            font-size: 13px;
+        }
+
+    .DivContraseña .icono {
+        width: 26px;
+        top: 35px;
+        right: 15px;
+    }
+
+    .botonesS {
+        width: 50%;
+        margin: 15px auto;
+    }
+
+    .botonesR {
+        width: 50%;
+        flex-direction: column;
+        gap: 10px;
+        margin: 15px auto;
+    }
+
+        .botonesS input,
+        .botonesR input {
+            width: 100%;
+            font-size: 12px;
+            padding: 10px;
+        }
+
+    .botonesS a {
+        font-size: 10px;
+    }
+
+
+
+
+
+    /*HTML HOME*/
+    .Encabezado {
+        width: 100%;
+        height: 60px;
+        background-color: #C89D81;
+        border: solid 1px #5C2603;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .logo {
+        width: 50px;
+        margin-left: 20px;
+        filter: drop-shadow(8px 4px 1px rgba(0, 0, 0, 0.3));
+    }
+
+    .perfil {
+        width: 45px;
+        height: auto;
+        margin-right: 20px;
+        filter: drop-shadow(4px 3px 1px rgba(0, 0, 0, 0.3));
+        cursor: pointer;
+    }
+
+    .notificacion {
+        display: none;
+    }
+
+    .DivBusqueda {
+        display: none
+    }
+
+    .divGeneros {
+        display: none;
+    }
+
+    .divNotificaciones {
+        display: none;
+    }
+
+    .mainHome {
+        width: 95%;
+        margin: 10px auto;
+    }
+
+    .Seccion {
+        padding: 5px;
+    }
+
+        .Seccion h2 {
+            font-size: 15px;
+            margin-left: 20px;
+        }
+
+    .divFilaLibros {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .carrusel {
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        width: 100%;
+        height: 230px;
+    }
+
+        .carrusel::-webkit-scrollbar {
+            display: none;
+        }
+
+    .filaLibros {
+        gap: 10px;
+        scroll-snap-type: x mandatory;
+    }
+
+    .btnFlechaIzq,
+    .btnFlechaDer {
+        display: none;
+    }
+
+    .libro {
+        max-width: 140px;
+        margin: 0 10px;
+        scroll-snap-align: start;
+    }
+
+    .book {
+        min-width: 80px;
+        height: 130px;
+    }
+
+    .titulo {
+        font-size: 12px;
+        width: 100px;
+        height: 40px;
+    }
+
+    .autor {
+        font-size: 10px;
+        margin-top: -2px;
+        width: 100px;
+        height: 18px;
+    }
+
+
+
+
+
+    /*HTML PERFIL*/
+    .mainPerfil {
+        width: 95%;
+        margin: 0 auto;
+        padding: 20px 10px;
+        flex-direction: column;
+        gap: 30px;
+        align-items: center;
+    }
+
+    .circulo {
+        width: 150px;
+        height: 150px;
+    }
+
+    .imgPerfil {
+        width: 150px;
+        height: 150px;
+    }
+
+    .divPerfil {
+        position: relative;
+    }
+
+    .perfilMenu {
+        top: 60px;
+        right: 5px;
+    }
+
+
+    .lapiz {
+        width: 30px;
+        right: 5px;
+        bottom: 5px;
+    }
+
+    .grupo {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        margin: 10px 0;
+    }
+
+    .infoPerfil label {
+        width: 100%;
+        font-size: 13px;
+    }
+
+    .inputConIcono {
+        width: 100%;
+    }
+
+        .inputConIcono input {
+            width: 100%;
+            font-size: 13px;
+        }
+
+        .inputConIcono .icono {
+            width: 25px;
+            right: 55px;
+            top: 15px;
+        }
+
+    .btnEditarCampo {
+        width: 32px;
+    }
+
+    .botones {
+        width: 100%;
+        gap: 15px;
+        flex-direction: row;
+    }
+
+    .guardar,
+    .cancelar {
+        width: 50%;
+        font-size: 12px;
+    }
+
+    .imgGuardar {
+        width: 30px;
+    }
+
+
+
+
+
+    /*HTML LIBRO*/
+    .mainLibro {
+        width: 95%;
+        margin: 20px auto 80px auto;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .libroElegido {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .bookE {
+        min-width: 120px;
+        height: 180px;
+    }
+
+    .infoLibroE {
+        align-items: center;
+    }
+
+        .infoLibroE p {
+            width: 100%;
+            font-size: 13px;
+            text-align: center;
+        }
+
+    .infoE {
+        align-items: center;
+    }
+
+    .spanLibroE {
+        font-size: 14px;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .likesE, .listaE {
+        width: 18px;
+        height: 18px;
+    }
+
+    .divLeer {
+        flex-direction: row;
+        gap: 10px;
+        margin: 10px auto;
+    }
+
+    .leer {
+        width: 140px;
+        font-size: 13px;
+        padding: 6px;
+    }
+
+    .imgLeer {
+        width: 30px;
+    }
+
+    .divLibroSC {
+        width: 100%;
+        height: 320px;
+        border-radius: 20px;
+    }
+
+    .divBtnSC {
+        flex-direction: row;
+    }
+
+        .divBtnSC button {
+            font-size: 13px;
+            padding: 10px;
+        }
+
+            .divBtnSC button:nth-of-type(1) {
+                border-right: 2px solid #5C2603;
+            }
+
+    .divSinopsis,
+    .divContenido {
+        height: 280px;
+    }
+
+        .divSinopsis.activo p {
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .divContenido li {
+            font-size: 12px;
+        }
+
+
+    /*HTML LECTURA*/
+    .mainLectura {
+        width: 100vw;
+        max-width: none;
+        margin: 0;
+    }
+
+    .divLectura {
+        height: auto;
+        padding: 15px;
+        border-radius: 0;
+    }
+
+    .divHeader {
+        gap: 8px;
+    }
+
+    .divLectura h2 {
+        font-size: 16px;
+        text-align: center;
+    }
+
+    .spanLibroCap {
+        font-size: 14px;
+    }
+
+    .likesCap {
+        width: 18px;
+        height: 18px;
+    }
+
+    .btnLista {
+        width: 24px;
+        right: 5px;
+    }
+
+    .divTexto {
+        height: 420px;
+        padding-right: 10px;
+    }
+
+        .divTexto p {
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+    .continuar {
+        width: 160px;
+        font-size: 13px;
+        padding: 8px;
+        margin: 12px 0;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 55px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 90%;
+        max-width: 320px;
+        height: 80vh;
+    }
+
+    .btnListaSidebar {
+        width: 24px;
+        left: 15px;
+        top: 15px;
+    }
+
+    .portada {
+        width: 120px;
+        height: 170px;
+    }
+
+    .sidebar h4 {
+        font-size: 14px;
+    }
+
+    .listaCapitulos {
+        height: 65%;
+    }
+
+
+    /*HTML BUSQUEDA - CELULAR*/
+    .DivBusquedaC {
+        width: 90%;
+        margin: 20px auto 0 auto;
+        padding: 20px;
+        position: relative;
+        border: none;
+        display: flex;
+        justify-content: center;
+        flex: 1;
+    }
+
+        .DivBusquedaC input {
+            font-family: 'Honking Personal Use Only';
+            font-size: 14px;
+            background-color: white;
+            color: black;
+            border: solid 1px black;
+            border-radius: 25px;
+            height: 35px;
+            width: 450px;
+            padding-left: 50px;
+            outline: none;
+        }
+
+    .lupaC {
+        width: 18px;
+        user-select: none;
+        position: absolute;
+        left: calc(50% - 200px + 50px);
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.8;
+        pointer-events: none;
+    }
+
+    .divGenerosC {
+        width: 90%;
+        margin: 0 20px;
+    }
+
+        .divGenerosC h3 {
+            font-family: 'Honking Personal Use Only';
+            font-size: 16px;
+            margin: 20px 0;
+            text-align: start;
+        }
+
+    .categorias {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+        .categorias button {
+            font-size: 14px;
+            padding: 5px;
+            border-radius: 20px;
+            width: 100%;
+        }
+
+    /*HTML NOTIFICACIONES - CELULAR*/
+    .menuNotificacionesC {
+        border-width: 1px;
+        top: 50px;
+    }
+
+        .menuNotificacionesC h3 {
+            font-size: 13px;
+            padding: 8px;
+        }
+
+    .sinMensajes,
+    .conMensajes {
+        font-size: 11px;
+        padding: 8px;
+    }
+}

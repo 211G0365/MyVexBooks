@@ -1,0 +1,346 @@
+﻿
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página principal</title>
+    <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+    <header class="Encabezado">
+        <img src="img/logo.png" class="logo" id="logo">
+
+        <div class="DivBusqueda">
+            <img src="img/lupa.png" class="lupa">
+            <input type="text" id="inputBusqueda" placeholder="Buscar">
+        </div>
+
+        <div class="divGeneros">
+            <button class="Generos" id="btnGeneros">
+                <span class="flecha">&#9660;</span>
+                <span>Géneros</span>
+            </button>
+            <div class="menuGeneros" id="menuGeneros"></div>
+        </div>
+
+        <div class="divNotificaciones">
+            <div class="iconoCampana">
+                <img src="img/notificacion.png" class="notificacion" id="btnNoti">
+                <span class="puntoRojo" id="puntoNuevo"></span>
+            </div>
+            <div class="menuNotificaciones" id="panelNoti">
+                <h3>Notificaciones</h3>
+                <p class="sinMensajes" id="sinMensajes">No hay mensajes nuevos</p>
+                <div class="listaMensajes" id="listaMensajes"></div>
+            </div>
+        </div>
+
+        <img src="fotoPerfil/perfil.png" class="perfil" id="perfil">
+    </header>
+
+    <main class="mainHome">
+        <section class="Seccion">
+            <h2>Top historias</h2>
+            <div class="divFilaLibros">
+                <button class="btnFlechaIzq">&#10094;</button>
+                <div class="carrusel">
+                    <div class="filaLibros" id="topHistorias"></div>
+                </div>
+                <button class="btnFlechaDer">&#10095;</button>
+            </div>
+        </section>
+
+        <section class="Seccion">
+            <h2>¡Tu próxima lectura!</h2>
+            <div class="divFilaLibros">
+                <button class="btnFlechaIzq">&#10094;</button>
+                <div class="carrusel">
+                    <div class="filaLibros" id="proximaLectura"></div>
+                </div>
+                <button class="btnFlechaDer">&#10095;</button>
+            </div>
+        </section>
+    </main>
+
+    <nav class="navMovil">
+        <img src="img/home.png" id="btnHomeMovil">
+        <img src="img/busqueda.png" id="btnBuscarMovil">
+        <div class="iconoCampanaC">
+            <img src="img/notificacion.png" id="btnNotiMovil">
+            <span class="puntoRojo" id="puntoNuevo"></span>
+        </div>
+    </nav>
+
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+
+        const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${token}` };
+
+        async function cargarGeneros() {
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Libros/generos", { headers });
+                const generos = await resp.json();
+                const menu = document.getElementById("menuGeneros");
+                menu.innerHTML = "";
+                generos.forEach(g => {
+                    const btn = document.createElement("button");
+                    btn.textContent = g;
+                    btn.onclick = () => {
+                        window.location.href = `./generos.html?genero=${encodeURIComponent(g)}`;
+                    };
+                    menu.appendChild(btn);
+                });
+            } catch (err) {
+                console.error("Error cargando géneros:", err);
+            }
+        }
+
+
+
+        async function cargarTopHistorias() {
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Libros/recientes", { headers });
+                const libros = await resp.json();
+                renderizarCarrusel("#topHistorias", libros);
+            } catch (err) {
+                console.error("Error cargando top historias:", err);
+            }
+        }
+
+        async function cargarProximaLectura() {
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Libros", { headers });
+                const libros = await resp.json();
+                renderizarCarrusel("#proximaLectura", libros);
+            } catch (err) {
+                console.error("Error cargando próxima lectura:", err);
+            }
+        }
+
+        function renderizarCarrusel(selector, libros) {
+            const cont = document.querySelector(selector);
+            cont.innerHTML = "";
+            libros.forEach(l => {
+                const div = document.createElement("div");
+                div.classList.add("libro");
+                div.innerHTML = `
+                        <img class="book" src="${l.portadaURL}" onerror="this.src='img/libro1.jpg'">
+                        <p class="titulo">${l.titulo}</p>
+                        <p class="autor">${l.autor}</p>
+                    `;
+                div.onclick = () => window.location.href = `./libro.html?id=${l.idLibro}`;
+                cont.appendChild(div);
+            });
+        }
+
+
+
+        function configurarEventosEstaticos() {
+            const btnGen = document.getElementById("btnGeneros");
+            const menuGen = document.getElementById("menuGeneros");
+            const flecha = document.querySelector(".flecha");
+
+            btnGen.addEventListener("click", () => {
+                menuGen.style.display = menuGen.style.display === "grid" ? "none" : "grid";
+                flecha.classList.toggle("arriba");
+            });
+
+            const btnNoti = document.getElementById("btnNoti");
+            const panelNoti = document.getElementById("panelNoti");
+            const puntoNuevo = document.getElementById("puntoNuevo");
+
+            btnNoti.addEventListener("click", () => {
+                panelNoti.style.display = panelNoti.style.display === "block" ? "none" : "block";
+                if (puntoNuevo.style.display === "block") puntoNuevo.style.display = "none";
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".divNotificaciones")) panelNoti.style.display = "none";
+                if (!e.target.closest(".divGeneros")) {
+                    menuGen.style.display = "none";
+                    flecha.classList.remove("arriba");
+                }
+            });
+
+            document.getElementById("perfil").onclick = () => window.location.href = "perfil.html";
+            document.getElementById("logo").onclick = () => window.location.href = "home.html";
+            document.getElementById("btnHomeMovil").onclick = () => window.location.href = "home.html";
+            document.getElementById("btnBuscarMovil").onclick = () => window.location.href = "busqueda.html";
+            document.getElementById("btnNotiMovil").onclick = () => window.location.href = "notificaciones.html";
+        }
+
+        // carrusel
+
+        function inicializarCarruseles() {
+            document.querySelectorAll(".divFilaLibros").forEach(carousel => {
+                const fila = carousel.querySelector(".filaLibros");
+                const btnIzq = carousel.querySelector(".btnFlechaIzq");
+                const btnDer = carousel.querySelector(".btnFlechaDer");
+                let index = 0;
+
+                function getVisibles() {
+                    const ancho = window.innerWidth;
+                    if (ancho >= 1200) return 6;
+                    if (ancho >= 992) return 5;
+                    if (ancho >= 768) return 4;
+                    if (ancho >= 576) return 3;
+                    return 2;
+                }
+
+                function getEspacio() { return 15; }
+
+                function actualizarCarrusel() {
+                    const libroWidth = fila.children[0].offsetWidth + getEspacio();
+                    fila.style.transform = `translateX(-${index * libroWidth}px)`;
+                }
+
+                function maxIndex() {
+                    return Math.max(0, fila.children.length - getVisibles());
+                }
+
+                btnDer.addEventListener("click", () => {
+                    if (index < maxIndex()) { index++; actualizarCarrusel(); }
+                });
+
+                btnIzq.addEventListener("click", () => {
+                    if (index > 0) { index--; actualizarCarrusel(); }
+                });
+
+                window.addEventListener("resize", () => {
+                    if (index > maxIndex()) index = maxIndex();
+                    actualizarCarrusel();
+                });
+            });
+        }
+
+        // buscador
+
+        function configurarBuscador() {
+            const input = document.getElementById("inputBusqueda");
+            let timeout = null;
+
+            input.addEventListener("input", () => {
+                const texto = input.value.trim();
+                clearTimeout(timeout);
+                if (!texto) {
+                    const cont = document.getElementById("resultadosBusqueda");
+                    if (cont) cont.remove();
+                    return;
+                }
+                timeout = setTimeout(() => buscarLibros(texto), 350);
+            });
+        }
+
+        async function buscarLibros(texto) {
+            try {
+                const resp = await fetch(`https://myvexbooks2.duckdns.org/api/Libros/buscar/${texto}`, { headers });
+                const libros = await resp.json();
+                mostrarResultadosBusqueda(libros);
+            } catch (err) {
+                console.error("Error buscando:", err);
+            }
+        }
+
+        function mostrarResultadosBusqueda(libros) {
+            let cont = document.getElementById("resultadosBusqueda");
+            if (!cont) {
+                cont = document.createElement("div");
+                cont.id = "resultadosBusqueda";
+                cont.style.padding = "20px";
+                cont.style.background = "white";
+                cont.style.border = "1px solid #ccc";
+                cont.style.margin = "20px";
+                cont.style.borderRadius = "10px";
+                document.querySelector("main").prepend(cont);
+            }
+            cont.innerHTML = "<h2>Resultados</h2>";
+            if (!libros.length) { cont.innerHTML += "<p>No hay resultados.</p>"; return; }
+            libros.forEach(l => {
+                cont.innerHTML += `
+                        <div style="display:flex; gap:15px; margin-bottom:10px; cursor:pointer"
+                             onclick="window.location.href='libro.html?id=${l.idLibro}'">
+                            <img src="${l.portadaURL}" style="width:60px; height:90px; object-fit:cover">
+                            <div>
+                                <p><b>${l.titulo}</b></p>
+                                <p>${l.autor}</p>
+                                <p style="font-size:12px; opacity:0.7">${l.genero}</p>
+                            </div>
+                        </div>`;
+            });
+        }
+
+
+        // notis
+
+        async function iniciarNotificaciones() {
+            if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+            try {
+                const registro = await navigator.serviceWorker.register("/sw.js");
+
+                const permiso = await Notification.requestPermission();
+                if (permiso !== "granted") return;
+
+                const subExistente = await registro.pushManager.getSubscription();
+                if (subExistente) await subExistente.unsubscribe();
+
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones/publickey", { headers });
+                let llavePublica = (await resp.text()).replace(/['"]/g, "");
+
+                try {
+                    const subscription = await registro.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(llavePublica)
+                    });
+                    await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones", {
+                        method: "POST", headers, body: JSON.stringify(subscription)
+                    });
+                } catch (err) {
+                    console.warn("No se pudo suscribir a push:", err);
+                }
+
+            } catch (err) {
+                
+            }
+        }
+
+        function urlBase64ToUint8Array(base64) {
+            const padding = '='.repeat((4 - base64.length % 4) % 4);
+            const base64Clean = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const raw = window.atob(base64Clean);
+            return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+        }
+
+        
+        async function cargarFotoPerfilHome() {
+            const img = document.getElementById("perfil");
+            if (!img) return;
+
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", { headers });
+                const data = await resp.json();
+                const url = data?.fotoURL ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL) : "fotoPerfil/perfil.png";
+                img.src = url + "?t=" + Date.now();
+                localStorage.setItem("fotoPerfilURL", url);
+            } catch (err) {
+                console.error("Error cargando foto en Home:", err);
+                img.src = "fotoPerfil/perfil.png";
+            }
+        }
+
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await cargarGeneros();
+            await cargarTopHistorias();
+            await cargarProximaLectura();
+            await cargarFotoPerfilHome();
+            configurarEventosEstaticos();
+            configurarBuscador();
+            inicializarCarruseles();
+            iniciarNotificaciones();
+        });
+    </script>
+</body>
+</html>

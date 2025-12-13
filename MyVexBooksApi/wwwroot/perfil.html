@@ -1,0 +1,392 @@
+﻿
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil</title>
+    <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+    <header class="Encabezado">
+        <img src="img/logo.png" class="logo" id="logo">
+
+  
+        <div class="DivBusqueda">
+            <img src="img/lupa.png" class="lupa">
+            <input type="text" placeholder="Buscar">
+        </div>
+
+      
+        <div class="divGeneros">
+            <button class="Generos" id="btnGeneros">
+                <span class="flecha">&#9660;</span>
+                <span>Géneros</span>
+            </button>
+            <div class="menuGeneros" id="menuGeneros">
+        
+            </div>
+        </div>
+
+   
+        <div class="divNotificaciones">
+            <div class="iconoCampana">
+                <img src="img/notificacion.png" class="notificacion" id="btnNoti">
+                <span class="puntoRojo" id="puntoNuevo"></span>
+            </div>
+            <div class="menuNotificaciones" id="panelNoti">
+                <h3>Notificaciones</h3>
+                <p class="sinMensajes" id="sinMensajes">No hay mensajes nuevos</p>
+                <div class="listaMensajes" id="listaMensajes"></div>
+            </div>
+        </div>
+
+ 
+        <div class="divPerfil">
+            <img src="img/perfil.png" class="perfil" id="perfil">
+            <div class="perfilMenu" id="perfilMenu">
+                <button class="cerrarSesion" id="cerrarSesion">Cerrar sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="mainPerfil">
+        <div class="fotoPerfil">
+            <div class="circulo">
+                <img src="img/perfil.png" class="imgPerfil">
+                <img src="img/editar.png" class="lapiz" id="btnEditarFoto">
+            </div>
+        </div>
+
+        <div class="infoPerfil">
+            <div class="grupo">
+                <label>Nombre de usuario:</label>
+                <div class="inputConIcono">
+                    <input type="text" id="inputNombre" disabled>
+                    <img src="img/editar.png" class="btnEditarCampo" id="editarNombre">
+                </div>
+            </div>
+
+            <div class="grupo">
+                <label>Correo electrónico:</label>
+                <div class="inputConIcono">
+                    <input type="text" id="inputCorreo" disabled>
+                    <img src="img/editar.png" class="btnEditarCampo" id="editarCorreo">
+                </div>
+            </div>
+
+            <div class="grupo">
+                <label>Contraseña:</label>
+                <div class="inputConIcono">
+                    <input type="password" id="inputPassword" placeholder="Cambiar contraseña" disabled>
+                    <img src="img/libro-cerrado.png" id="iconoPassword" class="icono" alt="Mostrar/Ocultar">
+                    <img src="img/editar.png" class="btnEditarCampo" id="editarPassword">
+                </div>
+            </div>
+
+            <div class="botones" id="contenedorBotones" style="display:none;">
+                <button class="guardar" id="btnGuardar">
+                    <img src="img/book.png" class="imgGuardar">
+                    Guardar
+                </button>
+                <button class="cancelar" id="btnCancelar">Cancelar</button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="navMovil">
+        <img src="img/home.png" id="btnHomeMovil">
+        <img src="img/busqueda.png" id="btnBuscarMovil">
+        <div class="iconoCampanaC">
+            <img src="img/notificacion.png" id="btnNotiMovil">
+            <span class="puntoRojo" id="puntoNuevoMovil"></span>
+        </div>
+    </nav>
+
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+
+        const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${token}` };
+
+
+        const inputNombre = document.getElementById("inputNombre");
+        const inputCorreo = document.getElementById("inputCorreo");
+        const inputPassword = document.getElementById("inputPassword");
+        const contBotones = document.getElementById("contenedorBotones");
+        const btnGuardar = document.getElementById("btnGuardar");
+        const btnCancelar = document.getElementById("btnCancelar");
+        const inputFoto = document.createElement("input");
+        inputFoto.type = "file";
+        inputFoto.accept = "image/*";
+        inputFoto.style.display = "none";
+        document.body.appendChild(inputFoto);
+
+        let valoresOriginales = { nombre: "", correo: "", password: "" };
+
+
+        async function cargarPerfil() {
+            try {
+                const res = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil", { headers });
+                const perfil = await res.json();
+
+                inputNombre.value = perfil.nombre || "";
+                inputCorreo.value = perfil.correo || "";
+                inputPassword.value = "";
+
+                valoresOriginales = { nombre: inputNombre.value, correo: inputCorreo.value, password: "" };
+
+                await cargarFotoPerfil();
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando perfil: " + err.message);
+            }
+        }
+
+
+        async function cargarFotoPerfil() {
+            try {
+                const res = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", { headers });
+                const data = await res.json();
+                const img = document.querySelector(".imgPerfil");
+                const imgHeader = document.getElementById("perfil");
+
+                const url = data?.fotoURL
+                    ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL)
+                    : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
+
+                img.src = url + "?t=" + Date.now();
+                imgHeader.src = url + "?t=" + Date.now();
+                localStorage.setItem("fotoPerfilURL", url);
+
+            } catch (err) {
+                console.error("Error cargando foto:", err);
+            }
+        }
+
+        // SUBIR FOTO
+        inputFoto.addEventListener("change", async function () {
+            const archivo = this.files[0];
+            if (!archivo) return;
+
+            const formData = new FormData();
+            formData.append("Archivo", archivo);
+
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` },
+                    body: formData
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data?.error || "Error al subir foto");
+
+                const nuevaFoto = data.fotoURL.startsWith("http")
+                    ? data.fotoURL
+                    : "https://myvexbooks2.duckdns.org" + data.fotoURL;
+
+                document.querySelector(".imgPerfil").src = nuevaFoto + "?t=" + Date.now();
+                document.getElementById("perfil").src = nuevaFoto + "?t=" + Date.now();
+                localStorage.setItem("fotoPerfilURL", nuevaFoto);
+
+                alert("Foto actualizada ✔");
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+            }
+        });
+
+        document.getElementById("btnEditarFoto").onclick = () => inputFoto.click();
+
+
+        function mostrarBotones() { contBotones.style.display = "flex"; }
+        function habilitarEdicion(idInput) {
+            const campo = document.getElementById(idInput);
+            campo.disabled = false;
+            campo.style.background = "#ffffff";
+            campo.focus();
+            mostrarBotones();
+        }
+
+        document.getElementById("editarNombre").onclick = () => habilitarEdicion("inputNombre");
+        document.getElementById("editarCorreo").onclick = () => habilitarEdicion("inputCorreo");
+        document.getElementById("editarPassword").onclick = () => habilitarEdicion("inputPassword");
+
+        document.getElementById("iconoPassword").onclick = function () {
+            if (inputPassword.type === "password") {
+                inputPassword.type = "text";
+                this.src = "img/libro-abierto.png";
+            } else {
+                inputPassword.type = "password";
+                this.src = "img/libro-cerrado.png";
+            }
+        };
+
+        btnCancelar.onclick = function () {
+            inputNombre.value = valoresOriginales.nombre;
+            inputCorreo.value = valoresOriginales.correo;
+            inputPassword.value = valoresOriginales.password;
+
+            inputNombre.disabled = true;
+            inputCorreo.disabled = true;
+            inputPassword.disabled = true;
+
+            inputNombre.style.background = "#e5e5e5";
+            inputCorreo.style.background = "#e5e5e5";
+            inputPassword.style.background = "#e5e5e5";
+
+            contBotones.style.display = "none";
+        };
+
+        btnGuardar.onclick = async function () {
+            if (!inputNombre.disabled && inputNombre.value !== valoresOriginales.nombre) await actualizarCampo("nombre");
+            if (!inputCorreo.disabled && inputCorreo.value !== valoresOriginales.correo) await actualizarCampo("correo");
+            if (!inputPassword.disabled && inputPassword.value) await actualizarCampo("password");
+        };
+
+        async function actualizarCampo(campo) {
+            try {
+                let url = "", body = {};
+                if (campo === "nombre") { url = "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/nombre"; body = { Nombre: inputNombre.value }; }
+                else if (campo === "correo") { url = "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/correo"; body = { Correo: inputCorreo.value }; }
+                else if (campo === "password") { if (!inputPassword.value) return; url = "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/contraseña"; body = { Actual: valoresOriginales.password, Nueva: inputPassword.value }; }
+
+                const res = await fetch(url, { method: "PUT", headers, body: JSON.stringify(body) });
+                if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Error al actualizar"); }
+
+                if (campo === "nombre") valoresOriginales.nombre = inputNombre.value;
+                if (campo === "correo") valoresOriginales.correo = inputCorreo.value;
+                if (campo === "password") valoresOriginales.password = inputPassword.value;
+
+                alert("Datos guardados correctamente ✔");
+                inputNombre.disabled = true; inputCorreo.disabled = true; inputPassword.disabled = true;
+                inputNombre.style.background = "#e5e5e5"; inputCorreo.style.background = "#e5e5e5"; inputPassword.style.background = "#e5e5e5";
+                contBotones.style.display = "none";
+                inputPassword.value = "";
+
+            } catch (err) {
+                console.error(err);
+                alert("Error al actualizar: " + err.message);
+            }
+        }
+
+
+        async function cargarGeneros() {
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Libros/generos", { headers });
+                const generos = await resp.json();
+                const menu = document.getElementById("menuGeneros");
+                menu.innerHTML = "";
+                generos.forEach(g => {
+                    const btn = document.createElement("button");
+                    btn.textContent = g;
+                    btn.onclick = () => window.location.href = `./generos.html?genero=${encodeURIComponent(g)}`;
+                    menu.appendChild(btn);
+                });
+            } catch (err) { console.error("Error cargando géneros:", err); }
+        }
+
+
+        function configurarBuscador() {
+            const input = document.querySelector(".DivBusqueda input");
+            let timeout = null;
+
+            input.addEventListener("input", () => {
+                const texto = input.value.trim();
+                clearTimeout(timeout);
+                if (!texto) {
+                    const cont = document.getElementById("resultadosBusqueda");
+                    if (cont) cont.remove();
+                    return;
+                }
+                timeout = setTimeout(() => buscarLibros(texto), 350);
+            });
+        }
+
+        async function buscarLibros(texto) {
+            try {
+                const resp = await fetch(`https://myvexbooks2.duckdns.org/api/Libros/buscar/${texto}`, { headers });
+                const libros = await resp.json();
+                mostrarResultadosBusqueda(libros);
+            } catch (err) {
+                console.error("Error buscando:", err);
+            }
+        }
+
+        function mostrarResultadosBusqueda(libros) {
+            let cont = document.getElementById("resultadosBusqueda");
+            if (!cont) {
+                cont = document.createElement("div");
+                cont.id = "resultadosBusqueda";
+                cont.style.padding = "20px";
+                cont.style.background = "white";
+                cont.style.border = "1px solid #ccc";
+                cont.style.margin = "20px";
+                cont.style.borderRadius = "10px";
+                document.querySelector("main").prepend(cont);
+            }
+            cont.innerHTML = "<h2>Resultados</h2>";
+            if (!libros.length) { cont.innerHTML += "<p>No hay resultados.</p>"; return; }
+            libros.forEach(l => {
+                cont.innerHTML += `
+                    <div style="display:flex; gap:15px; margin-bottom:10px; cursor:pointer"
+                         onclick="window.location.href='Libro.html?id=${l.idLibro}'">
+                        <img src="${l.portadaURL}" style="width:60px; height:90px; object-fit:cover">
+                        <div>
+                            <p><b>${l.titulo}</b></p>
+                            <p>${l.autor}</p>
+                            <p style="font-size:12px; opacity:0.7">${l.genero}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+
+        document.getElementById("btnGeneros").addEventListener("click", () => {
+            const menu = document.getElementById("menuGeneros");
+            menu.style.display = menu.style.display === "grid" ? "none" : "grid";
+            document.querySelector(".flecha").classList.toggle("arriba");
+        });
+
+        document.getElementById("btnNoti").addEventListener("click", () => {
+            const panel = document.getElementById("panelNoti");
+            const punto = document.getElementById("puntoNuevo");
+            panel.style.display = panel.style.display === "block" ? "none" : "block";
+            if (punto.style.display === "block") punto.style.display = "none";
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!e.target.closest(".divNotificaciones")) document.getElementById("panelNoti").style.display = "none";
+            if (!e.target.closest(".divGeneros")) {
+                document.getElementById("menuGeneros").style.display = "none";
+                document.querySelector(".flecha").classList.remove("arriba");
+            }
+        });
+
+        const perfilMenu = document.getElementById("perfilMenu");
+        document.getElementById("perfil").addEventListener("click", () => perfilMenu.classList.toggle("activo"));
+
+        document.getElementById("cerrarSesion").onclick = function () {
+            if (confirm("¿Deseas cerrar sesión?")) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("fotoPerfilURL");
+                window.location.href = "index.html";
+            }
+        };
+
+        // Navegación
+        document.getElementById("logo").onclick = () => window.location.href = "home.html";
+        document.getElementById("btnHomeMovil").onclick = () => window.location.href = "home.html";
+        document.getElementById("btnBuscarMovil").onclick = () => window.location.href = "busqueda.html";
+        document.getElementById("btnNotiMovil").onclick = () => window.location.href = "notificaciones.html";
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await cargarPerfil();
+            await cargarGeneros();
+            configurarBuscador();
+        });
+    </script>
+</body>
+</html>
+

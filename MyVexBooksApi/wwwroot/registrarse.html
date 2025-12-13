@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse</title>
+    <link href="estilos.css" rel="stylesheet">
+</head>
+<body>
+    <main class="mainSesionRegistro">
+        <div class="iniciosesion">
+            <img src="img/MyVEXBooks.png" />
+
+            <label>Nombre de usuario:</label>
+            <input type="text" placeholder="Ingrese su nombre de usuario" required>
+
+            <label>Correo electrónico:</label>
+            <input type="text" placeholder="Ingrese su correo electrónico" required>
+
+            <div class="DivContraseña">
+                <label>Contraseña:</label>
+                <input type="text" id="password" placeholder="Ingrese su contraseña" required>
+                <img src="img/libro-cerrado.png" id="icono" class="icono" alt="Mostrar/Ocultar">
+            </div>
+
+
+            <div class="botonesR">
+                <input type="submit" id="registrarse" value="Registrarse">
+                <input type="submit" id="cancelar" value="Cancelar">
+            </div>
+        </div>
+
+        <div class="lateral">
+            <img src="img/logo.png" />
+        </div>
+    </main>
+
+    <script>
+        const Api = "https://myvexbooks2.duckdns.org/api/usuarios/registro";
+
+        document.getElementById("cancelar").onclick = () => {
+            window.location.href = "index.html";
+        };
+
+        // Mostrar / ocultar contraseña
+        const password = document.getElementById("password");
+        const IconoLibro = document.getElementById("icono");
+        let mostrando = false;
+
+        IconoLibro.addEventListener("click", () => {
+            mostrando = !mostrando;
+            password.type = mostrando ? "text" : "password";
+            IconoLibro.src = mostrando ? "img/libro-abierto.png" : "img/libro-cerrado.png";
+        });
+
+        // Registrar usuario
+        document.getElementById("registrarse").addEventListener("click", async () => {
+
+            const nombre = document.querySelector("input[placeholder='Ingrese su nombre de usuario']").value.trim();
+            const correo = document.querySelector("input[placeholder='Ingrese su correo electrónico']").value.trim();
+            const contraseña = password.value.trim();
+
+            if (!nombre || !correo || !contraseña) {
+                alert("Todos los campos son obligatorios.");
+                return;
+            }
+
+            try {
+                const response = await fetch(Api, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nombre, correo, contraseña })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.error || "Error al registrar usuario.");
+                    return;
+                }
+
+                alert("Usuario registrado correctamente ✔");
+                window.location.href = "index.html";
+
+            } catch (error) {
+                alert("No se pudo conectar con el servidor.");
+                console.log(error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de sesión</title>
+    <link href="estilos.css" rel="stylesheet">
+</head>
+<body>
+    <main class="mainSesionRegistro">
+        <div class="iniciosesion">
+            <img src="img/MyVEXBooks.png" />
+
+            <label>Correo electrónico:</label>
+            <input type="text" placeholder="Ingrese su correo electrónico" required>
+
+            <div class="DivContraseña">
+                <label>Contraseña:</label>
+                <input type="password" id="password" placeholder="Ingrese su contraseña" required>
+                <img src="img/libro-cerrado.png" id="icono" class="icono" alt="Mostrar/Ocultar">
+            </div>
+
+
+            <div class="botonesS">
+                <input type="submit" id="iniciarSesion" value="Iniciar Sesión">
+                <a href="registrarse.html" id="registrarse">Crear cuenta</a>
+            </div>
+        </div>
+
+        <div class="lateral">
+            <img src="img/logo.png" />
+        </div>
+    </main>
+
+    <script>
+
+
+
+        async function registrarPush() {
+            if (!("serviceWorker" in navigator)) return;
+
+            const sw = await navigator.serviceWorker.register("sw.js");
+
+            const permiso = await Notification.requestPermission();
+            if (permiso !== "granted") return;
+
+            const publicKey = await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones/publickey")
+                .then(r => r.text());
+
+            const suscripcion = await sw.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlB64ToUint8Array(publicKey)
+            });
+
+            await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(suscripcion)
+            });
+        }
+
+        // Conversión clave VAPID
+        function urlB64ToUint8Array(base64String) {
+            const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+            const raw = window.atob(base64);
+            const arr = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; ++i) arr[i] = raw.charCodeAt(i);
+            return arr;
+        }
+
+        const Api = "https://myvexbooks2.duckdns.org/api/usuarios/login";
+
+        document.getElementById("registrarse").onclick = function () {
+            window.location.href = "registrarse.html";
+        };
+
+    
+        const password = document.getElementById("password");
+        const IconoLibro = document.getElementById("icono");
+        let mostrando = false;
+
+        IconoLibro.addEventListener("click", () => {
+            mostrando = !mostrando;
+            password.type = mostrando ? "text" : "password";
+            IconoLibro.src = mostrando ? "img/libro-abierto.png" : "img/libro-cerrado.png";
+        });
+
+  
+        document.getElementById("iniciarSesion").addEventListener("click", async () => {
+
+            const correo = document.querySelector("input[placeholder='Ingrese su correo electrónico']").value.trim();
+            const contraseña = password.value.trim();
+
+            if (!correo || !contraseña) {
+                alert("Todos los campos son obligatorios.");
+                return;
+            }
+
+            try {
+                const response = await fetch(Api, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ correo, contraseña })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.mensaje || "Correo o contraseña incorrectos.");
+                    return;
+                }
+
+              
+                localStorage.setItem("token", data.token);
+
+           
+                window.location.href = "home.html";
+
+            } catch (error) {
+                alert("No se pudo conectar con el servidor.");
+                console.log(error);
+            }
+        });
+    </script>
+</body>
+</html>

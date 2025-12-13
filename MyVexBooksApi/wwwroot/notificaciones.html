@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificaciones</title>
+    <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+    <header class="Encabezado">
+        <img src="img/logo.png" class="logo" id="logo">
+        <img src="img/perfil.png" class="perfil" id="perfil">
+    </header>
+
+    <main class="mainNotificaciones">
+        <div class="menuNotificacionesC">
+            <h3>Notificaciones</h3>
+            <p class="sinMensajes" id="sinMensajes">No hay mensajes nuevos</p>
+            <div class="listaMensajes" id="listaMensajes">
+                <p class="conMensajes" id="conMensajes"></p>
+            </div>
+        </div>
+    </main>
+
+    <nav class="navMovil">
+        <img src="img/home.png" id="btnHomeMovil">
+        <img src="img/busqueda.png" id="btnBuscarMovil">
+        <div class="iconoCampanaC">
+            <img src="img/notificacion.png" id="btnNotiMovil">
+            <span class="puntoRojo" id="puntoNuevo"></span>
+        </div>
+    </nav>
+    
+    <script>
+
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+
+        const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${token}` };
+
+        // Navegacion de paginas
+        document.getElementById("perfil").onclick = function () {
+            window.location.href = "perfil.html";
+        }
+
+        document.getElementById("logo").onclick = function () {
+            window.location.href = "home.html";
+        }
+
+        // Navegación móvil
+        document.getElementById("btnHomeMovil").onclick = () => {
+            window.location.href = "home.html";
+        };
+
+        document.getElementById("btnBuscarMovil").onclick = () => {
+            window.location.href = "busqueda.html";
+        };
+
+        document.getElementById("btnNotiMovil").onclick = () => {
+            window.location.href = "notificaciones.html";
+        };
+
+        async function cargarFotoPerfil() {
+            const img = document.getElementById("perfil");
+            if (!img) return;
+
+            try {
+                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", { headers });
+                const data = await resp.json();
+                const url = data?.fotoURL ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL) : "fotoPerfil/perfil.png";
+                img.src = url + "?t=" + Date.now();
+                localStorage.setItem("fotoPerfilURL", url);
+            } catch (err) {
+                console.error("Error cargando foto de perfil:", err);
+                img.src = "fotoPerfil/perfil.png";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+          
+            cargarFotoPerfil();
+         
+        });
+
+    </script>
+</body>
+</html>
