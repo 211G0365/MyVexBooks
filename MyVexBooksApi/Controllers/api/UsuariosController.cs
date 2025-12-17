@@ -145,11 +145,11 @@ namespace MyVexBooks.Controllers.api
             if (archivos.Length > 0)
             {
                 var nombreArchivo = Path.GetFileName(archivos[0]);
-                var urlPublica = $"{Request.Scheme}://{Request.Host}/fotoPerfil/{nombreArchivo}";
+                var urlPublica = $"https://{Request.Host}/fotoPerfil/{nombreArchivo}";
                 return Ok(new { fotoURL = urlPublica });
             }
 
-            var defaultURL = $"{Request.Scheme}://{Request.Host}/fotoPerfil/perfil.png";
+            var defaultURL = $"https://{Request.Host}/fotoPerfil/perfil.png";
             return Ok(new { fotoURL = defaultURL });
         }
 

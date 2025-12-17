@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Géneros</title>
     <link rel="stylesheet" href="estilos.css" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="iconos/512.png" />
 </head>
 <body>
     <header class="Encabezado">
@@ -44,6 +46,13 @@
     </main>
 
     <script>
+
+          if ("sw" in navigator) {
+      navigator.serviceWorker.register("/sw.js")
+          .then(() => console.log("SW registrado"))
+          .catch(err => console.error(err));
+  }
+
         const token = localStorage.getItem("token");
         if (!token) window.location.href = "index.html";
 
@@ -224,13 +233,25 @@
                 const url = data?.fotoURL
                     ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL)
                     : "fotoPerfil/perfil.png";
+
                 img.src = url + "?t=" + Date.now();
                 localStorage.setItem("fotoPerfilURL", url);
 
+                // cachear la imagen física
+                if ("caches" in window) {
+                    const cache = await caches.open("cacheLibros");
+                    cache.add(url).catch(() => { }); // ignora errores si ya está cacheada
+                }
+
             } catch (err) {
-                img.src = "fotoPerfil/perfil.png";
+                console.warn("No se pudo cargar la foto de perfil online, usando localStorage o default.", err);
+
+                const fotoOffline = localStorage.getItem("fotoPerfilURL") || "fotoPerfil/perfil.png";
+                img.src = fotoOffline + "?t=" + Date.now();
             }
         }
+
+
 
 
 

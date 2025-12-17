@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lectura</title>
     <link rel="stylesheet" href="estilos.css" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="iconos/512.png" />
 </head>
 <body>
     <header class="Encabezado">
@@ -76,6 +78,13 @@
     </main>
 
     <script>
+
+        if ("sw" in navigator) {
+            navigator.serviceWorker.register("/sw.js")
+                .then(() => console.log("SW registrado"))
+                .catch(err => console.error(err));
+        }
+
         const token = localStorage.getItem("token");
         if (!token) window.location.href = "index.html";
 
@@ -86,7 +95,7 @@
         const params = new URLSearchParams(window.location.search);
         const idParte = params.get("id");
 
-        let listaPartes = []; /
+        let listaPartes = []; 
 
         async function cargarParte() {
             try {
