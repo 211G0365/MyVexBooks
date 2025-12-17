@@ -9,12 +9,28 @@
     "notificaciones.html",
     "perfil.html",
     "registrarse.html",
-    "/"
+    "/",
+    "fotoPerfil/perfil.png",      
+    "img/logo.png",
+    "img/fondo.jpg",
+    "img/book.png",
+    "img/book_120714.png",
+    "img/busqueda.png",
+    "img/editar.png",
+    "img/heart-icon_34407.png",
+    "img/home.png",
+    "img/libro-abierto.png",
+    "img/libro-cerrado.png",
+    "img/likes.png",
+    "img/lista.png",
+    "img/lupa.png",
+    "img/MyVEXBooks.png",
+    "img/notificacion.png"
 ];
 
 // INSTALACIÓN
 async function descargarInstalar() {
-    let cache = await caches.open("cacheLibros");
+    const cache = await caches.open("cacheLibros");
     await cache.addAll(urls);
     self.skipWaiting();
 }
@@ -23,46 +39,72 @@ async function descargarInstalar() {
 async function obtenerDesdeCache(request) {
     const cache = await caches.open("cacheLibros");
 
-    // Si es API dinámica
+    // API dinámica GET
     if (request.url.includes("myvexbooks2.duckdns.org/api/") && request.method === "GET") {
         try {
             const respuesta = await fetch(request);
-            // Guardar solo GETs
             cache.put(request, respuesta.clone());
             return respuesta;
-        } catch (err) {
+        } catch {
             const cached = await cache.match(request);
             if (cached) return cached;
             return new Response(JSON.stringify({ error: "Offline y sin datos cacheados" }), {
                 headers: { "Content-Type": "application/json" }
             });
         }
-    } else if (request.url.includes("myvexbooks2.duckdns.org/api/") && request.method !== "GET") {
-        // No cachear POST, PUT, DELETE
+    }
+
+    // API dinámica POST, PUT, DELETE → no cachear
+    if (request.url.includes("myvexbooks2.duckdns.org/api/")) {
         return fetch(request);
     }
 
-    // Archivos estáticos → Cache First
+    // Foto de perfil dinámica
+    if (request.url.includes("/perfil/foto")) {
+        try {
+            const respuesta = await fetch(request);
+            cache.put(request, respuesta.clone());
+            return respuesta;
+        } catch {
+            const cached = await cache.match(request);
+            if (cached) return cached;
+
+         
+            const placeholder = await cache.match("fotoPerfil/perfil.png");
+            return placeholder || new Response("Usuario offline", { status: 503 });
+        }
+    }
+
+    
+    if (request.destination === "image") {
+        const cached = await cache.match(request);
+        try {
+            return cached || await fetch(request);
+        } catch {
+            return new Response("Imagen no disponible offline", { status: 503 });
+        }
+    }
+
+    //  Cache First
     const respuestaCache = await cache.match(request);
-    return respuestaCache || fetch(request);
+    try {
+        return respuestaCache || await fetch(request);
+    } catch {
+        return new Response("Archivo no disponible offline", { status: 503 });
+    }
 }
 
-// EVENTO INSTALL
+// install
 self.addEventListener("install", function (event) {
     event.waitUntil(descargarInstalar());
 });
 
-// EVENTO FETCH
+// fetch
 self.addEventListener("fetch", function (event) {
     event.respondWith(obtenerDesdeCache(event.request));
 });
 
-
-
-
-
-
-
+// notis
 self.addEventListener("push", function (event) {
     event.waitUntil(mostrarNotificacion(event));
 });
@@ -71,14 +113,12 @@ async function mostrarNotificacion(event) {
     if (!event.data) return;
 
     let data = event.data.json();
-
     const windows = await clients.matchAll({ type: "window" });
-    const appVisible = windows.some(w => w.visibilityState == "visible");
+    const appVisible = windows.some(w => w.visibilityState === "visible");
 
     if (appVisible) {
-      
         for (let w of windows) {
-            if (w.visibilityState == "visible") {
+            if (w.visibilityState === "visible") {
                 w.postMessage({
                     tipo: "RECIBIDA",
                     titulo: data.titulo,
@@ -87,18 +127,14 @@ async function mostrarNotificacion(event) {
             }
         }
     } else {
-     
         await self.registration.showNotification(data.titulo, {
             body: data.mensaje,
-            data: {} 
+            data: {}
         });
     }
 }
 
 self.addEventListener("notificationclick", function (event) {
     event.notification.close();
-
-    event.waitUntil(
-        clients.openWindow("Home.html")
-    );
+    event.waitUntil(clients.openWindow("home.html"));
 });
