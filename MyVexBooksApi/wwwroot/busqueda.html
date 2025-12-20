@@ -132,19 +132,57 @@
         // cargar foto
 
         async function cargarFotoPerfil() {
-            const img = document.getElementById("perfil");
-            if (!img) return;
+            const img = document.querySelector(".imgPerfil");
+            const imgHeader = document.getElementById("perfil");
+            const fallback = "fotoPerfil/perfil.png";
+            const online = navigator.onLine;
 
             try {
-                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", { headers });
-                const data = await resp.json();
-                const url = data?.fotoURL ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL) : "fotoPerfil/perfil.png";
-                img.src = url + "?t=" + Date.now();
+                const res = await fetch(
+                    "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto",
+                    { headers }
+                );
+
+                if (!res.ok) throw new Error("No se pudo obtener la foto");
+
+                const data = await res.json();
+
+                let url = data?.fotoURL
+                    ? data.fotoURL
+                    : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
+
+                // Asegurar HTTPS
+                if (!url.startsWith("http")) {
+                    url = "https://myvexbooks2.duckdns.org" + url;
+                }
+
+                // SOLO forzar recarga cuando hay internet
+                const finalUrl = online ? `${url}?t=${Date.now()}` : url;
+
+                img.src = finalUrl;
+                imgHeader.src = finalUrl;
+
+                // Guardar para uso offline futuro
                 localStorage.setItem("fotoPerfilURL", url);
+
             } catch (err) {
-                console.error("Error cargando foto de perfil:", err);
-                img.src = "fotoPerfil/perfil.png";
+                console.warn("Usando imagen offline o fallback");
+
+                // Intentar usar última URL guardada
+                const cachedURL = localStorage.getItem("fotoPerfilURL");
+
+                if (cachedURL) {
+                    img.src = cachedURL;
+                    imgHeader.src = cachedURL;
+                } else {
+                    img.src = fallback;
+                    imgHeader.src = fallback;
+                }
             }
+
+            // Fallback visual si algo falla
+            img.onerror = () => img.src = fallback;
+            imgHeader.onerror = () => imgHeader.src = fallback;
         }
 
 

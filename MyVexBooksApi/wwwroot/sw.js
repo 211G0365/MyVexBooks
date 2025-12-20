@@ -59,21 +59,27 @@ async function obtenerDesdeCache(request) {
         return fetch(request);
     }
 
-    // Foto de perfil dinámica
-    if (request.url.includes("/perfil/foto")) {
-        try {
-            const respuesta = await fetch(request);
-            cache.put(request, respuesta.clone());
-            return respuesta;
-        } catch {
-            const cached = await cache.match(request);
-            if (cached) return cached;
+    // Foto de perfil dinámica (REAL)
+    if (request.url.includes("/fotoPerfil/")) {
+        const cleanRequest = new Request(
+            request.url.split("?")[0],
+            { method: "GET" }
+        );
 
-         
-            const placeholder = await cache.match("fotoPerfil/perfil.png");
-            return placeholder || new Response("Usuario offline", { status: 503 });
+        const cached = await cache.match(cleanRequest);
+        if (cached) return cached;
+
+        try {
+            const response = await fetch(cleanRequest);
+            cache.put(cleanRequest, response.clone());
+            return response;
+        } catch {
+            const fallback = await cache.match("fotoPerfil/perfil.png");
+            return fallback || new Response("", { status: 204 });
         }
     }
+
+
 
     
     if (request.destination === "image") {

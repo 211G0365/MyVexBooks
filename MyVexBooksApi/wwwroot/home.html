@@ -326,29 +326,46 @@
             const img = document.getElementById("perfil");
             if (!img) return;
 
+            const fallback = "fotoPerfil/perfil.png";
+            const online = navigator.onLine;
+
             try {
-                const resp = await fetch("https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto", { headers });
-                const data = await resp.json();
+                const res = await fetch(
+                    "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto",
+                    { headers }
+                );
 
-                const url = data?.fotoURL
-                    ? (data.fotoURL.startsWith("http") ? data.fotoURL : "https://myvexbooks2.duckdns.org" + data.fotoURL)
-                    : "fotoPerfil/perfil.png";
+                if (!res.ok) throw new Error("No se pudo obtener la foto");
 
-                img.src = url + "?t=" + Date.now();
-                localStorage.setItem("fotoPerfilURL", url);
+                const data = await res.json();
 
-                // cachear la imagen física
-                if ("caches" in window) {
-                    const cache = await caches.open("cacheLibros");
-                    cache.add(url).catch(() => { }); // ignora errores si ya está cacheada
+                let url = data?.fotoURL
+                    ? data.fotoURL
+                    : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
+
+                // Asegurar HTTPS absoluto
+                if (!url.startsWith("http")) {
+                    url = "https://myvexbooks2.duckdns.org" + url;
                 }
 
-            } catch (err) {
-                console.warn("No se pudo cargar la foto de perfil online, usando localStorage o default.", err);
+                // SOLO refrescar cuando hay red
+                const finalUrl = online ? `${url}?t=${Date.now()}` : url;
 
-                const fotoOffline = localStorage.getItem("fotoPerfilURL") || "fotoPerfil/perfil.png";
-                img.src = fotoOffline + "?t=" + Date.now();
+                img.src = finalUrl;
+
+                // Guardar base para offline
+                localStorage.setItem("fotoPerfilURL", url);
+
+            } catch (err) {
+                console.warn("Usando foto offline o fallback");
+
+                const cachedURL = localStorage.getItem("fotoPerfilURL");
+
+                img.src = cachedURL || fallback;
             }
+
+            // fallback visual seguro
+            img.onerror = () => img.src = fallback;
         }
 
 
