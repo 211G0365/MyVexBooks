@@ -79,7 +79,7 @@
 
     <script>
 
-        if ("sw" in navigator) {
+        if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js")
                 .then(() => console.log("SW registrado"))
                 .catch(err => console.error(err));
@@ -352,9 +352,7 @@
                     : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
 
                 // Asegurar HTTPS absoluto
-                if (!url.startsWith("http")) {
-                    url = "https://myvexbooks2.duckdns.org" + url;
-                }
+                url = url.replace("http://", "https://");
 
                 // SOLO refrescar cuando hay red
                 const finalUrl = online ? `${url}?t=${Date.now()}` : url;

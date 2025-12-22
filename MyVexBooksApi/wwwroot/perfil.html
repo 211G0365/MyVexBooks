@@ -164,10 +164,7 @@
                     ? data.fotoURL
                     : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
 
-                // Asegurar HTTPS
-                if (!url.startsWith("http")) {
-                    url = "https://myvexbooks2.duckdns.org" + url;
-                }
+                url = url.replace("http://", "https://");
 
                 // SOLO forzar recarga cuando hay internet
                 const finalUrl = online ? `${url}?t=${Date.now()}` : url;
@@ -223,21 +220,16 @@
                 const imgPerfil = document.querySelector(".imgPerfil");
                 const imgHeader = document.getElementById("perfil");
 
-                // Mostrar sin ?t=
-                imgPerfil.src = nuevaFoto;
-                imgHeader.src = nuevaFoto;
-
-                // FORZAR CACHE REAL
-                if ("caches" in window) {
-                    const cache = await caches.open("cacheLibros");
-                    const response = await fetch(nuevaFoto);
-                    await cache.put(nuevaFoto, response.clone());
-                }
-
-                // Guardar referencia
+                // NO forzar cache manual
                 localStorage.setItem("fotoPerfilURL", nuevaFoto);
 
+                // Forzar refresco visual (cache busting)
+                const bust = `?t=${Date.now()}`;
+                imgPerfil.src = nuevaFoto + bust;
+                imgHeader.src = nuevaFoto + bust;
+
                 alert("Foto actualizada ✔");
+
             } catch (err) {
                 console.error(err);
                 alert("Error: " + err.message);

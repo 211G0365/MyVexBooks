@@ -12,7 +12,7 @@
 <body>
     <header class="Encabezado">
         <img src="img/logo.png" class="logo" id="logo">
-        <img src="img/perfil.png" class="perfil" id="perfil">
+        <img src="fotoPerfil/perfil.png" class="perfil" id="perfil">
     </header>
 
     <main class="mainNotificaciones">
@@ -35,7 +35,7 @@
     </nav>
     
     <script>
-        if ("sw" in navigator) {
+        if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js")
                 .then(() => console.log("SW registrado"))
                 .catch(err => console.error(err));
@@ -68,11 +68,14 @@
             window.location.href = "notificaciones.html";
         };
 
-        async function cargarFotoPerfil() {
-            const img = document.querySelector(".imgPerfil");
-            const imgHeader = document.getElementById("perfil");
+        async function cargarFotoPerfilHome() {
+            const img = document.getElementById("perfil");
+            if (!img) return;
+
             const fallback = "fotoPerfil/perfil.png";
-            const online = navigator.onLine;
+
+            const saved = localStorage.getItem("fotoPerfilURL");
+            if (saved) img.src = saved;
 
             try {
                 const res = await fetch(
@@ -80,51 +83,24 @@
                     { headers }
                 );
 
-                if (!res.ok) throw new Error("No se pudo obtener la foto");
-
                 const data = await res.json();
-
-                let url = data?.fotoURL
+                let url = data.fotoURL.startsWith("http")
                     ? data.fotoURL
-                    : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
+                    : "https://myvexbooks2.duckdns.org" + data.fotoURL;
 
-                // Asegurar HTTPS
-                if (!url.startsWith("http")) {
-                    url = "https://myvexbooks2.duckdns.org" + url;
-                }
-
-                // SOLO forzar recarga cuando hay internet
-                const finalUrl = online ? `${url}?t=${Date.now()}` : url;
-
-                img.src = finalUrl;
-                imgHeader.src = finalUrl;
-
-                // Guardar para uso offline futuro
+                img.src = `${url}?t=${Date.now()}`;
                 localStorage.setItem("fotoPerfilURL", url);
-
-            } catch (err) {
-                console.warn("Usando imagen offline o fallback");
-
-                // Intentar usar última URL guardada
-                const cachedURL = localStorage.getItem("fotoPerfilURL");
-
-                if (cachedURL) {
-                    img.src = cachedURL;
-                    imgHeader.src = cachedURL;
-                } else {
-                    img.src = fallback;
-                    imgHeader.src = fallback;
-                }
+            } catch {
+                img.src = saved || fallback;
             }
 
-            // Fallback visual si algo falla
             img.onerror = () => img.src = fallback;
-            imgHeader.onerror = () => imgHeader.src = fallback;
         }
+
 
         document.addEventListener("DOMContentLoaded", async () => {
           
-            cargarFotoPerfil();
+            cargarFotoPerfilHome();
          
         });
 

@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using MyVexBooks.Models.Dtos;
 using MyVexBooks.Models.DTOs;
 using MyVexBooks.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
 
 namespace MyVexBooks.Controllers.api
 {
@@ -95,38 +98,50 @@ namespace MyVexBooks.Controllers.api
 
         [Authorize]
         [HttpPost("perfil/foto")]
-        public async Task<IActionResult> SubirFoto([FromForm] FotoPerfilDTO dto)
+        public async Task<IActionResult> SubirFoto([FromForm] IFormFile Archivo)
         {
-            try
+            if (Archivo == null || Archivo.Length == 0)
+                return BadRequest(new { error = "No se envió ninguna imagen" });
+
+            // 🛑 límite de peso (5 MB)
+            if (Archivo.Length > 5 * 1024 * 1024)
+                return BadRequest(new { error = "La imagen es demasiado grande" });
+
+            var idUsuario = int.Parse(User.FindFirst("IdUsuario")!.Value);
+
+            var carpeta = Path.Combine(env.WebRootPath, "fotoPerfil");
+            if (!Directory.Exists(carpeta))
+                Directory.CreateDirectory(carpeta);
+
+            // 🔥 borrar fotos anteriores
+            var anteriores = Directory.GetFiles(carpeta, $"usuario_{idUsuario}.*");
+            foreach (var f in anteriores)
+                System.IO.File.Delete(f);
+
+            // 📥 cargar imagen
+            using var image = await Image.LoadAsync(Archivo.OpenReadStream());
+
+            // 🔧 redimensionar (cuadrada)
+            image.Mutate(x => x.Resize(new ResizeOptions
             {
-                var archivo = dto.Archivo;
+                Size = new Size(512, 512),
+                Mode = ResizeMode.Crop
+            }));
 
-                if (archivo == null || archivo.Length == 0)
-                    return BadRequest(new { error = "No se envió ninguna imagen" });
+            // 📁 nombre fijo
+            var nombreArchivo = $"usuario_{idUsuario}.webp";
+            var ruta = Path.Combine(carpeta, nombreArchivo);
 
-                var idUsuario = int.Parse(User.FindFirst("IdUsuario")!.Value);
-
-                var carpeta = Path.Combine(env.WebRootPath, "fotoPerfil");
-                if (!Directory.Exists(carpeta))
-                    Directory.CreateDirectory(carpeta);
-
-                var extension = Path.GetExtension(archivo.FileName);
-                var nombreArchivo = $"usuario_{idUsuario}{extension}";
-                var ruta = Path.Combine(carpeta, nombreArchivo);
-
-   
-                using (var stream = new FileStream(ruta, FileMode.Create))
-                {
-                    await archivo.CopyToAsync(stream);
-                }
-                var urlPublica = $"{Request.Scheme}://{Request.Host}/fotoPerfil/{nombreArchivo}";
-
-                return Ok(new { fotoURL = urlPublica });
-            }
-            catch (Exception ex)
+            // 💾 guardar como WEBP
+            await image.SaveAsync(ruta, new WebpEncoder
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Quality = 75
+            });
+
+            // 🧠 cache-buster para el frontend
+            var url = $"{Request.Scheme}://{Request.Host}/fotoPerfil/{nombreArchivo}?v={DateTime.UtcNow.Ticks}";
+
+            return Ok(new { fotoURL = url });
         }
 
 
@@ -137,21 +152,21 @@ namespace MyVexBooks.Controllers.api
         public IActionResult ObtenerFoto()
         {
             var idUsuario = int.Parse(User.FindFirst("IdUsuario")!.Value);
-
             var carpeta = Path.Combine(env.WebRootPath, "fotoPerfil");
 
-            var archivos = Directory.GetFiles(carpeta, $"usuario_{idUsuario}.*");
+            var ruta = Path.Combine(carpeta, $"usuario_{idUsuario}.webp");
 
-            if (archivos.Length > 0)
+            if (System.IO.File.Exists(ruta))
             {
-                var nombreArchivo = Path.GetFileName(archivos[0]);
-                var urlPublica = $"https://{Request.Host}/fotoPerfil/{nombreArchivo}";
-                return Ok(new { fotoURL = urlPublica });
+                var url = $"{Request.Scheme}://{Request.Host}/fotoPerfil/usuario_{idUsuario}.webp";
+                return Ok(new { fotoURL = url });
             }
 
-            var defaultURL = $"https://{Request.Host}/fotoPerfil/perfil.png";
+            var defaultURL = $"{Request.Scheme}://{Request.Host}/fotoPerfil/perfil.png";
             return Ok(new { fotoURL = defaultURL });
         }
+
+
 
 
 
