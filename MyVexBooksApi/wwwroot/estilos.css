@@ -28,6 +28,7 @@
 
 
 
+
 /* ============================================== */
 /*                    HTML Y BODY                 */
 /* ============================================== */
@@ -43,7 +44,7 @@ body {
     background-position: center;
     background-attachment: fixed;
     min-height: 100vh;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .navMovil {
@@ -54,6 +55,7 @@ body {
 
 
 
+/*#region Diseño original*/
 /* ============================================== */
 /*       INICIO DE SESIÓN Y REGISTRARSE           */
 /* ============================================== */
@@ -201,7 +203,7 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    object-fit:cover;
+    object-fit: cover;
     margin: 10px 40px 10px 20px;
     filter: drop-shadow(4px 3px 1px rgba(0, 0, 0, 0.3));
     cursor: pointer;
@@ -1189,8 +1191,7 @@ body {
     padding: 10px;
     display: none;
 }
-
-
+/*#endregion*/
 
 
 
@@ -1199,6 +1200,7 @@ body {
 /*               RESPONSIVE - CELULAR             */
 /* ============================================== */
 @media (max-width: 600px) {
+    /*#region*/
     /*BARRA DE NAVEGACIÓN MÓVIL*/
     .navMovil {
         position: fixed;
@@ -1239,7 +1241,6 @@ body {
             cursor: pointer;
         }
 
-    /* Punto rojo */
     .puntoRojo {
         background-color: red;
         border-radius: 50%;
@@ -1250,6 +1251,8 @@ body {
         position: absolute;
         display: none;
     }
+
+
 
 
 
@@ -1788,4 +1791,870 @@ body {
         font-size: 11px;
         padding: 8px;
     }
+    /*#endregion*/
+}
+
+
+
+
+
+/* ============================================== */
+/*             RESPONSIVE - LAPTOP                */
+/* ============================================== */
+@media (min-width: 1024px) and (max-width: 1535px) {
+    /*#region*/
+
+    /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
+    .mainSesionRegistro {
+        margin: 50px auto;
+        padding: 20px;
+        justify-content: center;
+        gap: 40px;
+    }
+
+    .iniciosesion {
+        width: 320px;
+    }
+
+        .iniciosesion img {
+            width: 250px;
+        }
+
+        .iniciosesion input {
+            font-size: 13px;
+            width: 85%;
+        }
+
+    .lateral {
+        width: 380px;
+        height: auto;
+        margin-left: 40px;
+    }
+
+        .lateral img {
+            width: 100%;
+            height: auto;
+        }
+
+    .botonesS input,
+    .botonesR input {
+        width: 120px;
+        font-size: 12px;
+    }
+
+
+
+
+
+    /*HTML HOME*/
+    .Encabezado {
+        height: 70px;
+    }
+
+    .logo {
+        width: 60px;
+        margin-left: 25px;
+    }
+
+    .perfil {
+        width: 45px;
+        margin-right: 25px;
+    }
+
+    .DivBusqueda input {
+        width: 350px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    .lupa {
+        left: calc(50% - 175px);
+        width: 18px;
+    }
+
+    .divGeneros {
+        margin-right: 18%;
+    }
+
+    .menuGeneros {
+        width: 300px;
+        height: auto;
+        padding: 15px;
+        gap: 8px;
+    }
+
+        .menuGeneros button {
+            font-size: 11px;
+            padding: 5px 0;
+        }
+
+    .mainHome {
+        max-width: 1200px;
+        margin: 15px auto;
+    }
+
+    .Seccion h2 {
+        font-size: 18px;
+        margin-left: 25px;
+    }
+
+    .filaLibros {
+        gap: 40px;
+    }
+
+    .book {
+        min-width: 90px;
+        height: 135px;
+    }
+
+    .titulo {
+        font-size: 11px;
+        width: 90px;
+        height: 35px;
+    }
+
+    .autor {
+        font-size: 9px;
+        width: 90px;
+    }
+
+    .btnFlechaIzq,
+    .btnFlechaDer {
+        width: 35px;
+        height: 35px;
+        font-size: 20px;
+    }
+
+
+
+
+
+    /*HTML PERFIL*/
+    .mainPerfil {
+        width: 85%;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 30px;
+        gap: 40px;
+    }
+
+    .circulo,
+    .imgPerfil {
+        width: 180px;
+        height: 180px;
+    }
+
+    .lapiz {
+        width: 30px;
+    }
+
+    .grupo {
+        gap: 12px;
+        margin: 10px 0;
+    }
+
+    .infoPerfil label {
+        font-size: 13px;
+        width: 150px;
+    }
+
+    .inputConIcono input {
+        width: 280px;
+        font-size: 13px;
+        padding: 10px 15px;
+    }
+
+    .inputConIcono .icono {
+        right: 55px;
+        width: 25px;
+    }
+
+    .btnEditarCampo {
+        width: 30px;
+    }
+
+    .botones {
+        gap: 30px;
+    }
+
+    .guardar,
+    .cancelar {
+        width: 130px;
+        font-size: 12px;
+    }
+
+
+
+
+
+    /*HTML GÉNEROS*/
+    .mainGeneros {
+        width: 85%;
+        max-width: 1000px;
+        margin: 30px auto;
+    }
+
+        .mainGeneros h3 {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+
+    .listaLibros {
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 30px 20px;
+    }
+
+    .libroG {
+        gap: 10px;
+    }
+
+    .book {
+        min-width: 90px;
+        height: 130px;
+    }
+
+    .infoLibro p {
+        font-size: 11px;
+        width: 120px;
+    }
+
+    .spanL {
+        font-size: 12px;
+    }
+
+    .likes,
+    .lista {
+        width: 18px;
+        height: 18px;
+    }
+
+
+
+
+
+    /*HTML LIBRO*/
+    .mainLibro {
+        width: 90%;
+        max-width: 1000px;
+        margin: 30px auto;
+        gap: 30px;
+    }
+
+    .bookE {
+        min-width: 160px;
+        height: 240px;
+    }
+
+    .infoLibroE p {
+        font-size: 13px;
+        width: 160px;
+    }
+
+    .spanLibroE {
+        font-size: 13px;
+        gap: 6px;
+    }
+
+    .likesE, .listaE {
+        width: 18px;
+        height: 18px;
+    }
+
+    .divLeer {
+        gap: 20px;
+    }
+
+    .leer {
+        width: 130px;
+        font-size: 13px;
+        padding: 6px;
+    }
+
+    .divLibroSC {
+        width: 500px;
+        height: 270px;
+    }
+
+    .divBtnSC button {
+        font-size: 13px;
+        padding: 10px;
+    }
+
+    .divSinopsis,
+    .divContenido {
+        height: 240px;
+    }
+
+        .divSinopsis.activo p {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .divContenido li {
+            font-size: 12px;
+        }
+
+
+
+
+
+    /*HTML LECTURA*/
+    .mainLectura {
+        width: 90%;
+        max-width: 1000px;
+        margin: 30px auto;
+    }
+
+    .divLectura {
+        height: auto;
+        padding: 25px 40px;
+        border-radius: 25px;
+    }
+
+        .divLectura h2 {
+            font-size: 18px;
+        }
+
+    .spanLibroCap {
+        font-size: 14px;
+        gap: 6px;
+    }
+
+    .likesCap {
+        width: 18px;
+        height: 18px;
+    }
+
+    .divTexto {
+        height: 380px;
+    }
+
+        .divTexto p {
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+    .sidebar {
+        width: 270px;
+        border-radius: 20px;
+    }
+
+    .listaCapitulos {
+        height: 60%;
+    }
+
+        .listaCapitulos li {
+            font-size: 13px;
+            padding: 10px;
+        }
+
+    .continuar {
+        width: 150px;
+        font-size: 13px;
+        padding: 8px;
+    }
+
+
+
+
+
+    /*HTML BUSQUEDA*/
+    .mainBusqueda {
+        width: 85%;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 30px;
+    }
+
+    .DivBusquedaC {
+        width: 100%;
+        padding: 15px;
+    }
+
+        .DivBusquedaC input {
+            width: 350px;
+            height: 32px;
+            font-size: 14px;
+            padding-left: 45px;
+        }
+
+    .lupaC {
+        width: 18px;
+        left: calc(50% - 180px);
+    }
+
+    .divGenerosC h3 {
+        font-size: 18px;
+        margin-top: 10px;
+    }
+
+    .categorias {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px 20px;
+    }
+
+        .categorias button {
+            font-size: 13px;
+            padding: 8px;
+            border-radius: 25px;
+        }
+
+
+
+
+
+    /*HTML NOTIFICACIONES*/
+    .mainNotificaciones {
+        width: 90%;
+        max-width: 900px;
+        margin: 30px auto;
+    }
+
+    .menuNotificacionesC {
+        width: 100%;
+        border-radius: 20px;
+        padding: 10px 0;
+    }
+
+        .menuNotificacionesC h3 {
+            font-size: 15px;
+            padding: 10px;
+        }
+
+    .sinMensajes,
+    .conMensajes {
+        font-size: 13px;
+        padding: 10px;
+    }
+    /*#endregion*/
+}
+
+
+
+
+
+
+/* ============================================== */
+/*                 RESPONSIVE - PC                */
+/* ============================================== */
+@media (min-width: 1536px) {
+    /*#region*/
+    /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
+    .mainSesionRegistro {
+        margin: 60px auto;
+        padding: 30px;
+        max-width: 1400px;
+        justify-content: center;
+        gap: 100px;
+    }
+
+    .iniciosesion {
+        width: 380px;
+    }
+
+        .iniciosesion img {
+            width: 300px;
+        }
+
+        .iniciosesion input {
+            width: 90%;
+            font-size: 14px;
+        }
+
+    .lateral {
+        width: 500px;
+        margin-left: 50px;
+    }
+
+    .botonesS input,
+    .botonesR input {
+        width: 150px;
+        font-size: 13px;
+    }
+
+
+
+
+
+    /*HTML HOME*/
+    .Encabezado {
+        height: 80px;
+    }
+
+    .logo {
+        width: 75px;
+        margin-left: 40px;
+    }
+
+    .perfil {
+        width: 55px;
+        margin-right: 40px;
+    }
+
+    .DivBusqueda input {
+        width: 480px;
+        height: 35px;
+        font-size: 14px;
+    }
+
+    .lupa {
+        left: calc(50% - 240px);
+        width: 20px;
+    }
+
+    .divGeneros {
+        margin-right: 22%;
+    }
+
+    .menuGeneros {
+        width: 380px;
+        padding: 20px;
+        gap: 12px;
+    }
+
+    .mainHome {
+        max-width: 1800px;
+        margin: 25px auto;
+    }
+
+    .Seccion h2 {
+        font-size: 22px;
+        margin-left: 40px;
+    }
+
+    .filaLibros {
+        gap: 70px;
+    }
+
+    .book {
+        min-width: 130px;
+        height: 190px;
+    }
+
+    .titulo {
+        font-size: 14px;
+        width: 130px;
+        height: 40px;
+    }
+
+    .autor {
+        font-size: 12px;
+        width: 130px;
+    }
+
+    .btnFlechaIzq,
+    .btnFlechaDer {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+    }
+
+
+
+
+
+    /*HTML PERFIL*/
+    .mainPerfil {
+        width: 80%;
+        max-width: 1200px;
+        margin: 60px auto;
+        padding: 40px;
+        gap: 80px;
+    }
+
+    .circulo,
+    .imgPerfil {
+        width: 230px;
+        height: 230px;
+    }
+
+    .lapiz {
+        width: 38px;
+    }
+
+    .grupo {
+        gap: 20px;
+        margin: 20px 0;
+    }
+
+    .infoPerfil label {
+        font-size: 15px;
+        width: 180px;
+    }
+
+    .inputConIcono input {
+        width: 350px;
+        font-size: 14px;
+        padding: 12px 18px;
+    }
+
+    .inputConIcono .icono {
+        right: 65px;
+        width: 30px;
+    }
+
+    .btnEditarCampo {
+        width: 35px;
+    }
+
+    .botones {
+        gap: 40px;
+    }
+
+    .guardar,
+    .cancelar {
+        width: 150px;
+        font-size: 13px;
+        padding: 10px;
+    }
+
+
+
+
+
+    /*HTML GÉNEROS*/
+    .mainGeneros {
+        width: 80%;
+        max-width: 1300px;
+        margin: 50px auto;
+    }
+
+        .mainGeneros h3 {
+            font-size: 22px;
+            margin: 20px 0;
+        }
+
+    .listaLibros {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 40px 30px;
+    }
+
+    .libroG {
+        gap: 15px;
+    }
+
+    .book {
+        min-width: 110px;
+        height: 160px;
+    }
+
+    .infoLibro p {
+        font-size: 13px;
+        width: 150px;
+    }
+
+    .spanL {
+        font-size: 14px;
+        gap: 10px;
+    }
+
+    .likes,
+    .lista {
+        width: 20px;
+        height: 20px;
+    }
+
+
+
+
+
+    /*HTML LIBRO*/
+    .mainLibro {
+        width: 90%;
+        max-width: 1400px;
+        margin: 50px auto;
+        gap: 50px;
+    }
+
+    .bookE {
+        min-width: 220px;
+        height: 330px;
+    }
+
+    .infoLibroE p {
+        font-size: 16px;
+        width: 200px;
+    }
+
+    .spanLibroE {
+        font-size: 15px;
+        gap: 8px;
+    }
+
+    .likesE, .listaE {
+        width: 22px;
+        height: 22px;
+    }
+
+    .leer {
+        width: 160px;
+        font-size: 15px;
+        padding: 8px;
+    }
+
+    .divLibroSC {
+        width: 700px;
+        height: 350px;
+    }
+
+    .divBtnSC button {
+        font-size: 16px;
+        padding: 14px;
+    }
+
+    .divSinopsis,
+    .divContenido {
+        height: 310px;
+    }
+
+        .divSinopsis.activo p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .divContenido li {
+            font-size: 14px;
+            padding: 12px;
+        }
+
+
+
+
+
+    /*HTML LECTURA*/
+    .mainLectura {
+        width: 90%;
+        max-width: 1500px;
+        margin: 50px auto;
+    }
+
+    .divLectura {
+        height: auto;
+        padding: 40px 60px;
+        border-radius: 25px;
+    }
+
+        .divLectura h2 {
+            font-size: 22px;
+        }
+
+    .spanLibroCap {
+        font-size: 16px;
+        gap: 8px;
+    }
+
+    .likesCap {
+        width: 22px;
+        height: 22px;
+    }
+
+    .divTexto {
+        height: 520px;
+    }
+
+        .divTexto p {
+            font-size: 16px;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+    .sidebar {
+        width: 320px;
+        border-radius: 25px;
+    }
+
+        .sidebar h4 {
+            font-size: 16px;
+        }
+
+    .listaCapitulos {
+        height: 70%;
+    }
+
+        .listaCapitulos li {
+            font-size: 14px;
+            padding: 12px;
+        }
+
+    .continuar {
+        width: 180px;
+        font-size: 15px;
+        padding: 10px;
+    }
+
+
+
+
+
+    /*HTML BUSQUEDA*/
+    .mainBusqueda {
+        width: 80%;
+        max-width: 1200px;
+        margin: 60px auto;
+        padding: 40px;
+    }
+
+    .DivBusquedaC {
+        width: 100%;
+        padding: 20px;
+    }
+
+        .DivBusquedaC input {
+            width: 500px;
+            height: 38px;
+            font-size: 15px;
+            padding-left: 55px;
+        }
+
+    .lupaC {
+        width: 20px;
+        left: calc(50% - 250px);
+    }
+
+    .divGenerosC h3 {
+        font-size: 20px;
+        margin-top: 15px;
+        margin-bottom: 20px;
+    }
+
+    .categorias {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px 25px;
+    }
+
+        .categorias button {
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 25px;
+        }
+
+
+
+
+
+    /*HTML NOTIFICACIONES*/
+    .mainNotificaciones {
+        width: 80%;
+        max-width: 1200px;
+        margin: 50px auto;
+    }
+
+    .menuNotificacionesC {
+        width: 100%;
+        border-radius: 25px;
+        padding: 15px 0;
+    }
+
+        .menuNotificacionesC h3 {
+            font-size: 18px;
+            padding: 12px;
+        }
+
+    .sinMensajes,
+    .conMensajes {
+        font-size: 14px;
+        padding: 12px;
+    }
+    /*#endregion*/
 }
