@@ -34,6 +34,8 @@
 /* ============================================== */
 html, body {
     min-height: 100%;
+    width: 100%;
+    padding: 0;
     margin: 0;
 }
 
@@ -44,7 +46,8 @@ body {
     background-position: center;
     background-attachment: fixed;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 .navMovil {
@@ -60,7 +63,7 @@ body {
 /*       INICIO DE SESIÓN Y REGISTRARSE           */
 /* ============================================== */
 .mainSesionRegistro {
-    margin: 50px;
+    margin: 50px auto;
     padding: 10px;
     display: flex;
     justify-content: flex-start;
@@ -182,6 +185,10 @@ body {
 /* ============================================== */
 /*                     HOME                       */
 /* ============================================== */
+.bodySesionRegistro {
+    overflow: hidden;
+}
+
 .Encabezado {
     width: 100%;
     height: 80px;
@@ -504,6 +511,10 @@ body {
 /* ============================================== */
 /*                    PERFIL                      */
 /* ============================================== */
+.bodyPerfil {
+    overflow: hidden;
+}
+
 .mainPerfil {
     width: 80%;
     max-width: 1000px;
@@ -899,6 +910,10 @@ body {
 /* ============================================== */
 /*                     LECTURA                    */
 /* ============================================== */
+.bodyLectura {
+    overflow: hidden;
+}
+
 .mainLectura {
     width: 90%;
     max-width: 1200px;
@@ -985,7 +1000,7 @@ body {
 .sidebar {
     background-color: #E1CABA;
     border: solid 1px #5C2603;
-    border-radius: 25px;
+    border-radius: 25px 0 0 25px;
     width: 300px;
     height: 100%;
     top: 0;
@@ -1034,6 +1049,7 @@ body {
     list-style: none;
     user-select: none;
     overflow-y: auto;
+    border: solid 1px #5C2603;
 }
 
     .listaCapitulos li {
@@ -1199,7 +1215,7 @@ body {
 /* ============================================== */
 /*               RESPONSIVE - CELULAR             */
 /* ============================================== */
-@media (max-width: 600px) {
+@media (min-width: 320px) and (max-width: 480px) {
     /*#region*/
     /*BARRA DE NAVEGACIÓN MÓVIL*/
     .navMovil {
@@ -1257,6 +1273,10 @@ body {
 
 
     /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
+    .bodySesionRegistro {
+        overflow-y: scroll;
+    }
+
     .mainSesionRegistro {
         flex-direction: column;
         justify-content: center;
@@ -1445,6 +1465,10 @@ body {
 
 
     /*HTML PERFIL*/
+    .bodyPerfil {
+        overflow-y: scroll;
+    }
+
     .mainPerfil {
         width: 95%;
         margin: 0 auto;
@@ -1532,6 +1556,7 @@ body {
 
 
 
+
     /*HTML LIBRO*/
     .mainLibro {
         width: 95%;
@@ -1614,24 +1639,28 @@ body {
                 border-right: 2px solid #5C2603;
             }
 
-    .divSinopsis,
+    .divSinopsis {
+        height: 230px;
+    }
+
     .divContenido {
         height: 280px;
     }
 
-        .divSinopsis.activo p {
-            font-size: 12px;
-            line-height: 1.5;
-            text-align: justify;
-        }
+    .divSinopsis.activo p {
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: justify;
+    }
 
-        .divContenido li {
-            font-size: 12px;
-        }
+    .divContenido li {
+        font-size: 12px;
+    }
 
 
     /*HTML LECTURA*/
     .mainLectura {
+        height: 100%;
         width: 100vw;
         max-width: none;
         margin: 0;
@@ -1667,7 +1696,7 @@ body {
     }
 
     .divTexto {
-        height: 420px;
+        height: 380px;
         padding-right: 10px;
     }
 
@@ -1686,12 +1715,12 @@ body {
 
     .sidebar {
         position: fixed;
-        top: 55px;
+        top: 60px;
         right: 50%;
-        transform: translateX(50%);
+        transform: translateX(60%);
         width: 90%;
         max-width: 320px;
-        height: 80vh;
+        height: 82vh;
     }
 
     .btnListaSidebar {
@@ -1710,7 +1739,7 @@ body {
     }
 
     .listaCapitulos {
-        height: 65%;
+        height: 57%;
     }
 
 
@@ -1798,10 +1827,651 @@ body {
 
 
 
+
+/* ============================================== */
+/*               RESPONSIVE - TABLET             */
+/* ============================================== */
+/*MODO RETRATO*/
+@media (min-width: 481px) and (max-width: 768px) {
+    /*#region*/
+    /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
+    .bodySesionRegistro {
+        overflow-y: hidden;
+    }
+
+    .mainSesionRegistro {
+        width: 90%;
+        margin: 20px auto;
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .lateral {
+        width: 60%;
+        max-width: 400px;
+        height: auto;
+        margin: 0;
+    }
+
+        .lateral img {
+            width: 100%;
+            height: auto;
+            filter: none;
+        }
+
+    .iniciosesion {
+        width: 100%;
+        max-width: 380px;
+        margin-right: 15px;
+        padding: 15px;
+    }
+
+        .iniciosesion img {
+            width: 240px;
+            margin: 0 auto 20px auto;
+        }
+
+        .iniciosesion label {
+            font-size: 14px;
+        }
+
+        .iniciosesion input {
+            width: 100%;
+            font-size: 14px;
+        }
+
+    .DivContraseña .icono {
+        width: 28px;
+        right: -20px;
+        top: 45px;
+    }
+
+    .botonesS,
+    .botonesR {
+        width: 100%;
+        align-items: center;
+    }
+
+    .botonesR {
+        flex-direction: row;
+        justify-content: center;
+        gap: 20px;
+    }
+
+        .botonesS input,
+        .botonesR input {
+            width: 140px;
+            font-size: 13px;
+        }
+
+    .botonesS a {
+        font-size: 11px;
+    }
+
+
+
+
+
+    /*HTML HOME*/
+    .Encabezado {
+        width: 130vw;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        padding: 0 15px;
+        height: 70px;
+        justify-content: space-between;
+    }
+
+    .logo {
+        width: 55px;
+        margin-left: 0;
+    }
+
+    .perfil {
+        width: 45px;
+        margin-right: 10px;
+    }
+
+    .notificacion {
+        width: 35px;
+    }
+
+    .menuNotificaciones {
+        transform: translateX(-50%);
+    }
+
+    .DivBusqueda {
+        display: flex;
+        justify-content: center;
+        flex: 1;
+    }
+
+        .DivBusqueda input {
+            width: 250px;
+            font-size: 13px;
+            height: 34px;
+        }
+
+    .lupa {
+        left: calc(50% - 130px);
+        width: 18px;
+    }
+
+    .divGeneros {
+        margin-right: 0;
+    }
+
+    .menuGeneros {
+        width: 320px;
+        padding: 15px;
+        gap: 5px;
+    }
+
+        .menuGeneros button {
+            font-size: 12px;
+        }
+
+    .mainHome {
+        width: 130vw;
+        min-height: calc(100vh - 70px);
+        margin: 10px;
+    }
+
+    .Seccion h2 {
+        font-size: 17px;
+        margin-left: 20px;
+    }
+
+    .divFilaLibros {
+        gap: 5px;
+    }
+
+    .filaLibros {
+        gap: 25px;
+        justify-content: center;
+    }
+
+    .book {
+        min-width: 90px;
+        height: 130px;
+    }
+
+    .titulo {
+        font-size: 12px;
+        width: 100px;
+    }
+
+    .autor {
+        font-size: 10px;
+        width: 100px;
+    }
+
+    .btnFlechaIzq,
+    .btnFlechaDer {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+
+
+
+
+
+    /*HTML PERFIL*/
+    .bodyPerfil {
+        overflow-y: auto;
+    }
+
+    .mainPerfil {
+        width: 130vw;
+        margin: 30px auto;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .circulo,
+    .imgPerfil {
+        width: 200px;
+        height: 200px;
+    }
+
+    .lapiz {
+        width: 32px;
+        right: 8px;
+        bottom: 8px;
+    }
+
+    .grupo {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 10px 0;
+    }
+
+    .infoPerfil {
+        width: 100vw;
+    }
+
+    .infoPerfil label {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .inputConIcono {
+        width: 100%;
+    }
+
+        .inputConIcono input {
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .inputConIcono .icono {
+            width: 26px;
+            right: 60px;
+            top: 14px;
+        }
+
+    .btnEditarCampo {
+        width: 32px;
+    }
+
+    .botones {
+        display: none;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .guardar,
+    .cancelar {
+        width: 140px;
+        font-size: 13px;
+    }
+
+
+
+
+
+    /*HTML GÉNEROS*/
+    .mainGeneros {
+        width: 90%;
+        margin: 25px auto;
+    }
+
+        .mainGeneros h3 {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+
+    .listaLibros {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 30px 20px;
+    }
+
+    .libroG {
+        gap: 12px;
+    }
+
+    .book {
+        min-width: 90px;
+        height: 130px;
+    }
+
+    .infoLibro p {
+        font-size: 11px;
+        width: 120px;
+    }
+
+    .spanL {
+        font-size: 13px;
+    }
+
+    .likes,
+    .lista {
+        width: 18px;
+        height: 18px;
+    }
+
+
+
+
+
+    /*HTML LIBRO*/
+    .mainLibro {
+        width: 90%;
+        margin: 30px auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .libroElegido {
+        flex-direction: row;
+        align-items: center;
+        gap: 25px;
+    }
+
+    .bookE {
+        min-width: 160px;
+        height: 240px;
+    }
+
+    .infoLibroE p {
+        font-size: 14px;
+        width: 160px;
+    }
+
+    .spanLibroE {
+        font-size: 14px;
+        gap: 6px;
+    }
+
+    .likesE,
+    .listaE {
+        width: 18px;
+        height: 18px;
+    }
+
+    .divLeer {
+        gap: 20px;
+        margin: 15px auto;
+    }
+
+    .leer {
+        width: 140px;
+        font-size: 14px;
+    }
+
+    .divLibroSC {
+        width: 100%;
+        max-width: 520px;
+        height: 280px;
+    }
+
+    .divBtnSC button {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .divSinopsis {
+        height: 190px;
+    }
+
+    .divContenido {
+        height: 215px;
+    }
+
+    .divSinopsis.activo p {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .divContenido li {
+        font-size: 13px;
+    }
+
+
+
+
+
+    /*HTML LECTURA*/
+    .bodyLectura {
+        overflow-y: auto;
+    }
+
+    .mainLectura {
+        width: 95%;
+        margin: 20px auto;
+        height: auto;
+    }
+
+    .divLectura {
+        height: auto;
+        padding: 25px;
+        border-radius: 25px;
+    }
+
+        .divLectura h2 {
+            font-size: 18px;
+            text-align: center;
+        }
+
+    .spanLibroCap {
+        font-size: 15px;
+    }
+
+    .likesCap {
+        width: 18px;
+        height: 18px;
+    }
+
+    .btnLista {
+        width: 26px;
+        right: 5px;
+    }
+
+    .divTexto {
+        height: 420px;
+        padding-right: 10px;
+    }
+
+        .divTexto p {
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+    .sidebar {
+        position: fixed;
+        top: 70px;
+        right: 50%;
+        transform: translateX(60%);
+        width: 85%;
+        max-width: 340px;
+        height: 80vh;
+        border-radius: 25px;
+    }
+
+    .btnListaSidebar {
+        width: 26px;
+        left: 15px;
+        top: 15px;
+    }
+
+    .portada {
+        width: 120px;
+        height: 170px;
+    }
+
+    .sidebar h4 {
+        font-size: 15px;
+    }
+
+    .listaCapitulos {
+        height: 60%;
+    }
+
+        .listaCapitulos li {
+            font-size: 13px;
+        }
+
+    .continuar {
+        width: 160px;
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    /*#endregion*/
+}
+
+
+
+
+
+/*MODO PAISAJE*/
+@media (min-width: 481px) and (max-width: 768px) and (orientation: landscape) {
+    /*#region*/
+    /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
+    .mainSesionRegistro {
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        margin: 40px auto;
+    }
+
+    .lateral {
+        width: 50%;
+        max-width: 320px;
+        order: 0;
+    }
+
+    .iniciosesion {
+        max-width: 320px;
+    }
+
+        .iniciosesion img {
+            width: 240px;
+        }
+
+
+
+
+
+    /*HTML HOME*/
+    .Encabezado {
+        height: 70px;
+        padding: 0 20px;
+    }
+
+    .DivBusqueda input {
+        width: 360px;
+    }
+
+    .lupa {
+        left: calc(50% - 180px);
+    }
+
+    .mainHome {
+        width: 95%;
+        margin: 15px auto;
+    }
+
+    .filaLibros {
+        justify-content: space-between;
+        gap: 30px;
+    }
+
+
+
+
+
+    /*HTML PERFIL*/
+    .mainPerfil {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 50px;
+    }
+
+    .circulo,
+    .imgPerfil {
+        width: 170px;
+        height: 170px;
+    }
+
+    .grupo {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .infoPerfil label {
+        width: 160px;
+    }
+
+    .inputConIcono input {
+        width: 260px;
+    }
+
+
+
+
+
+    /*HTML GÉNEROS*/
+    .listaLibros {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 25px 25px;
+    }
+
+
+
+
+
+    /*HTML LIBRO*/
+    .mainLibro {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 40px;
+    }
+
+    .libroElegido {
+        flex-direction: row;
+        gap: 25px;
+    }
+
+    .divLibroSC {
+        max-width: 480px;
+        height: 260px;
+    }
+
+
+
+
+
+    /*HTML LECTURA*/
+    .mainLectura {
+        width: 90%;
+        max-width: 1000px;
+        margin: 20px auto;
+    }
+
+    .divLectura {
+        padding: 20px 40px;
+    }
+
+    .divTexto {
+        height: 320px;
+    }
+
+    .sidebar {
+        width: 90%;
+        max-width: 310px;
+        height: 86vh;
+        top: -2px;
+        right: 50%;
+        transform: translateX(346px);
+        border-radius: 25px;
+        position: absolute;
+    }
+
+    .listaCapitulos {
+        height: 65%;
+    }
+    /*#endregion*/
+}
+
+
+
 /* ============================================== */
 /*             RESPONSIVE - LAPTOP                */
 /* ============================================== */
-@media (min-width: 1024px) and (max-width: 1535px) {
+@media (min-width: 769px) and (max-width: 1024px) {
     /*#region*/
 
     /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
@@ -2106,7 +2776,7 @@ body {
     }
 
     .divLectura {
-        height: auto;
+        height: 100%;
         padding: 25px 40px;
         border-radius: 25px;
     }
@@ -2141,7 +2811,7 @@ body {
     }
 
     .listaCapitulos {
-        height: 60%;
+        height: 58.5%;
     }
 
         .listaCapitulos li {
@@ -2238,7 +2908,7 @@ body {
 /* ============================================== */
 /*                 RESPONSIVE - PC                */
 /* ============================================== */
-@media (min-width: 1536px) {
+@media (min-width: 1025px) and (max-width: 1200px) {
     /*#region*/
     /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
     .mainSesionRegistro {
@@ -2569,7 +3239,7 @@ body {
         }
 
     .listaCapitulos {
-        height: 70%;
+        height: 72%;
     }
 
         .listaCapitulos li {
