@@ -33,6 +33,36 @@ const DB_NAME = "likesDB";
 const STORE_NAME = "pendientes";
 
 
+const PROFILE_DB = "perfilDB";
+const PROFILE_STORE = "perfil";
+const PROFILE_QUEUE = "perfilPendiente";
+
+function abrirPerfilDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(PROFILE_DB, 1);
+
+        req.onupgradeneeded = e => {
+            const db = e.target.result;
+
+            if (!db.objectStoreNames.contains(PROFILE_STORE)) {
+                db.createObjectStore(PROFILE_STORE, { keyPath: "id" });
+            }
+
+            if (!db.objectStoreNames.contains(PROFILE_QUEUE)) {
+                db.createObjectStore(PROFILE_QUEUE, {
+                    keyPath: "id",
+                    autoIncrement: true
+                });
+            }
+        };
+
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+
+
 function limpiarURL(request) {
     const url = new URL(request.url);
     url.search = "";
@@ -89,6 +119,44 @@ async function obtenerToken() {
 
 async function obtenerDesdeCache(request) {
     const cache = await caches.open(CACHE_NAME);
+
+    if (
+        request.method === "PUT" &&
+        request.url.includes("/api/Usuarios/perfil/")
+    ) {
+        try {
+            return await fetch(request);
+        } catch {
+            const body = await request.clone().json();
+
+            const campo = request.url.includes("/nombre")
+                ? "nombre"
+                : request.url.includes("/correo")
+                    ? "correo"
+                    : null;
+
+            if (campo) {
+                const db = await abrirPerfilDB();
+                const tx = db.transaction(PROFILE_QUEUE, "readwrite");
+                tx.objectStore(PROFILE_QUEUE).add({
+                    campo,
+                    valor: body.Nombre || body.Correo,
+                    fecha: Date.now()
+                });
+
+                if ("sync" in self.registration) {
+                    await self.registration.sync.register("sync-perfil");
+                }
+            }
+
+            return new Response(
+                JSON.stringify({ offline: true }),
+                { headers: { "Content-Type": "application/json" } }
+            );
+        }
+    }
+
+
 
 
     if (
@@ -215,7 +283,12 @@ self.addEventListener("sync", event => {
     if (event.tag === "sync-likes") {
         event.waitUntil(enviarLikesPendientes());
     }
+
+    if (event.tag === "sync-perfil") {
+        event.waitUntil(enviarPerfilPendiente());
+    }
 });
+
 
 let tokenGlobal = null;
 
@@ -223,7 +296,12 @@ self.addEventListener("message", event => {
     if (event.data?.tipo === "TOKEN") {
         tokenGlobal = event.data.token;
     }
+
+    if (event.data?.tipo === "FORZAR_SYNC_PERFIL") {
+        enviarPerfilPendiente();
+    }
 });
+
 
 
 async function enviarLikesPendientes() {
@@ -294,7 +372,60 @@ async function mostrarNotificacion(event) {
     }
 }
 
+async function enviarPerfilPendiente() {
+    const token = await obtenerToken();
+    if (!token) return;
+
+    const db = await abrirPerfilDB();
+    const tx = db.transaction(PROFILE_QUEUE, "readonly");
+    const store = tx.objectStore(PROFILE_QUEUE);
+
+    const cambios = await new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+    });
+
+    if (!cambios.length) return;
+
+    for (const cambio of cambios) {
+        try {
+            let url = "";
+            let body = {};
+
+            if (cambio.campo === "nombre") {
+                url = "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/nombre";
+                body = { Nombre: cambio.valor };
+            }
+
+            if (cambio.campo === "correo") {
+                url = "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/correo";
+                body = { Correo: cambio.valor };
+            }
+
+            await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
+            });
+
+        } catch (err) {
+            console.warn("Perfil aún offline, reintentando luego");
+            return; // ⛔ no limpiar cola
+        }
+    }
+
+    // ✅ Si todo salió bien → limpiar cola
+    const clearTx = db.transaction(PROFILE_QUEUE, "readwrite");
+    clearTx.objectStore(PROFILE_QUEUE).clear();
+}
+
+
 self.addEventListener("notificationclick", event => {
     event.notification.close();
     event.waitUntil(clients.openWindow("home.html"));
 });
+
