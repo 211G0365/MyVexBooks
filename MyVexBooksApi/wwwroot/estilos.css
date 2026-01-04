@@ -409,6 +409,44 @@ body {
     display: none;
 }
 
+.resultadosBusqueda {
+    background: white;
+    font-family: 'Honking Personal Use Only';
+    font-size: 12px;
+    color: black;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 25px;
+    filter: drop-shadow(8px 4px 1px rgba(0, 0, 0, 0.3));
+    user-select: none;
+}
+
+.divRB {
+    margin: 10px;
+    display: flex;
+    gap: 15px;
+    cursor: pointer;
+}
+
+.imgRB {
+    width: 70px;
+    height: 110px;
+    object-fit: fill;
+}
+
+.divBookRB {
+    font-size: 12px;
+    color: #5C2603;
+}
+
+.pAutorRB {
+    text-transform: uppercase;
+}
+
+.pGeneroRB {
+    color: black;
+    opacity: 0.7;
+}
 
 .mainHome {
     width: 95%;
@@ -1916,12 +1954,8 @@ body {
 
     /*HTML HOME*/
     .Encabezado {
-        width: 130vw;
-        margin-left: calc(-50vw + 50%);
-        margin-right: calc(-50vw + 50%);
-        padding: 0 15px;
-        height: 70px;
-        justify-content: space-between;
+        width: 100%;
+        align-self: center;
     }
 
     .logo {
@@ -1974,9 +2008,9 @@ body {
         }
 
     .mainHome {
-        width: 130vw;
-        min-height: calc(100vh - 70px);
-        margin: 10px;
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
     }
 
     .Seccion h2 {
@@ -2022,12 +2056,14 @@ body {
     /*HTML PERFIL*/
     .bodyPerfil {
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
     }
 
     .mainPerfil {
-        width: 130vw;
-        margin: 30px auto;
-        padding: 25px;
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -2055,13 +2091,13 @@ body {
     }
 
     .infoPerfil {
-        width: 100vw;
+        width: 100%;
     }
 
-    .infoPerfil label {
-        width: 100%;
-        font-size: 14px;
-    }
+        .infoPerfil label {
+            width: 100%;
+            font-size: 14px;
+        }
 
     .inputConIcono {
         width: 100%;
@@ -2318,13 +2354,19 @@ body {
 /*MODO PAISAJE*/
 @media (min-width: 481px) and (max-width: 768px) and (orientation: landscape) {
     /*#region*/
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
     /*HTML INICIO DE SESIÓN Y REGISTRARSE*/
     .mainSesionRegistro {
         flex-direction: row;
         justify-content: center;
         align-items: center;
         gap: 40px;
-        margin: 40px auto;
+        margin: 50px auto;
     }
 
     .lateral {
@@ -2347,9 +2389,14 @@ body {
 
     /*HTML HOME*/
     .Encabezado {
+        width: 100vw;
         height: 70px;
         padding: 0 20px;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        justify-content: space-between;
     }
+
 
     .DivBusqueda input {
         width: 360px;
@@ -2360,8 +2407,8 @@ body {
     }
 
     .mainHome {
-        width: 95%;
-        margin: 15px auto;
+        width: 100%;
+        max-width: 800px;
     }
 
     .filaLibros {
@@ -2399,6 +2446,11 @@ body {
         width: 260px;
     }
 
+    .inputConIcono .icono {
+        width: 26px;
+        right: 95px;
+        top: 14px;
+    }
 
 
 

@@ -28,17 +28,38 @@ namespace MyVexBooks.Services
 
         public void RegistrarUsuario(IRegistroDTO dto)
         {
-        
-            var entidad = Mapper.Map<Usuarios>(dto);
-          
-            entidad.ContraseñaHash = EncriptacionHelper.GetHash(dto.Contraseña);
-            entidad.Correo = entidad.Correo.Trim().ToLower();
+            var correo = dto.Correo.Trim().ToLower();
+            var nombre = dto.Nombre.Trim();
 
-            entidad.FechaRegistro = DateTime.UtcNow;   
+            // ✅ Validar duplicado solo en correo
+            if (Repository.GetAll().Any(u => u.Correo.ToLower() == correo))
+                throw new InvalidOperationException("El correo ya está registrado");
 
-   
-            Repository.Insert(entidad);
+            // Crear la entidad manualmente
+            var entidad = new Usuarios
+            {
+                Nombre = nombre, // el nombre puede repetirse
+                Correo = correo,
+                ContraseñaHash = EncriptacionHelper.GetHash(dto.Contraseña),
+                FechaRegistro = DateTime.UtcNow
+            };
+
+            try
+            {
+                Repository.Insert(entidad);
+            }
+            catch (Exception ex)
+            {
+                // Detectar violación de UNIQUE constraint solo para correo
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE"))
+                    throw new InvalidOperationException("El correo ya está registrado.");
+
+                throw new InvalidOperationException("No se pudo registrar el usuario: " + ex.Message, ex);
+            }
         }
+
+
+
 
 
         // LOGIN

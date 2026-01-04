@@ -202,34 +202,24 @@
             if (!cont) {
                 cont = document.createElement("div");
                 cont.id = "resultadosBusqueda";
-                cont.style.padding = "20px";
-                cont.style.background = "white";
-                cont.style.border = "1px solid #ccc";
-                cont.style.margin = "20px";
-                cont.style.borderRadius = "10px";
                 document.querySelector("main").prepend(cont);
             }
-
             cont.innerHTML = "<h2>Resultados</h2>";
-
-            if (!libros.length) {
-                cont.innerHTML += "<p>No hay resultados.</p>";
-                return;
-            }
-
+            if (!libros.length) { cont.innerHTML += "<p>No hay resultados.</p>"; return; }
             libros.forEach(l => {
                 cont.innerHTML += `
-                    <div style="display:flex; gap:15px; margin-bottom:10px; cursor:pointer"
-                        onclick="window.location.href='Libro.html?id=${l.idLibro}'">
-                        <img src="${l.portadaURL}" style="width:60px; height:90px; object-fit:cover">
-                        <div>
-                            <p><b>${l.titulo}</b></p>
-                            <p>${l.autor}</p>
-                            <p style="font-size:12px; opacity:0.7">${l.genero}</p>
-                        </div>
-                    </div>`;
+                 <div class="divRB"
+                      onclick="window.location.href='libro.html?id=${l.idLibro}'">
+                     <img class="imgRB" src="${l.portadaURL}" >
+                     <div class="divBookRB">
+                         <p><b>${l.titulo}</b></p>
+                         <p class="pAutorRB">${l.autor}</p>
+                         <p class="pGeneroRB">${l.genero}</p>
+                     </div>
+                 </div>`;
             });
         }
+        
 
 
         function configurarEventosEstaticos() {

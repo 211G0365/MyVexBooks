@@ -98,7 +98,7 @@ namespace MyVexBooks.Controllers.api
 
         [Authorize]
         [HttpPost("perfil/foto")]
-        public async Task<IActionResult> SubirFoto([FromForm] IFormFile Archivo)
+        public async Task<IActionResult> SubirFoto([FromForm(Name = "foto")] IFormFile Archivo)
         {
             if (Archivo == null || Archivo.Length == 0)
                 return BadRequest(new { error = "No se envió ninguna imagen" });
