@@ -1,7 +1,13 @@
 ﻿/* =========================
-   ARCHIVOS PRECACHE
+   CONFIG
 ========================= */
-const urls = [
+const CACHE_NAME = "cache-libros-v4";
+const FOTO_CACHE = "foto-perfil-cache-v2";
+
+/* =========================
+   PRECACHE
+========================= */
+const PRECACHE_URLS = [
     "offline.html",
     "index.html",
     "busqueda.html",
@@ -33,28 +39,11 @@ const urls = [
 ];
 
 /* =========================
-   CACHES & DB
-========================= */
-const CACHE_NAME = "cache-libros-v3";
-const FOTO_CACHE = "foto-perfil-cache-v2";
-
-const DB_NAME = "likesDB";
-const STORE_NAME = "pendientes";
-
-const PROFILE_DB = "perfilDB";
-const PROFILE_QUEUE = "perfilPendiente";
-
-const FOTO_DB = "fotoDB";
-const FOTO_STORE = "fotoPendiente";
-
-let tokenGlobal = null;
-
-/* =========================
    INSTALL
 ========================= */
 self.addEventListener("install", event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(urls))
+        caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS))
     );
     self.skipWaiting();
 });
@@ -67,7 +56,7 @@ self.addEventListener("activate", event => {
         caches.keys().then(keys =>
             Promise.all(
                 keys.map(k => {
-                    if (k !== CACHE_NAME && k !== FOTO_CACHE) {
+                    if (![CACHE_NAME, FOTO_CACHE].includes(k)) {
                         return caches.delete(k);
                     }
                 })
@@ -81,37 +70,83 @@ self.addEventListener("activate", event => {
    FETCH
 ========================= */
 self.addEventListener("fetch", event => {
-    event.respondWith(manejarFetch(event.request));
+    event.respondWith(handleFetch(event.request));
 });
 
-async function manejarFetch(request) {
-    const cache = await caches.open(CACHE_NAME);
+async function handleFetch(request) {
 
-    /* ===== API GET → cache first ===== */
-    if (request.method === "GET" && request.url.includes("/api/")) {
+    /* ===== 1. NAVEGACIÓN HTML (CACHE FIRST REAL) ===== */
+    if (request.mode === "navigate") {
+        const cache = await caches.open(CACHE_NAME);
+
+        // 1️⃣ responder inmediato desde cache
+        const cached = await cache.match(request.url);
+        if (cached) {
+            // 2️⃣ actualizar en background si hay red
+            eventWaitUntilSafe(
+                fetch(request).then(res => {
+                    if (res && res.ok) cache.put(request.url, res.clone());
+                }).catch(() => { })
+            );
+            return cached;
+        }
+
+        // 3️⃣ si no está en cache, intenta red
+        try {
+            const response = await fetch(request);
+            cache.put(request.url, response.clone());
+            return response;
+        } catch {
+            return cache.match("offline.html");
+        }
+    }
+
+
+    /* ===== 2. API GET (CACHE FIRST) ===== */
+    if (
+        request.method === "GET" &&
+        request.url.includes("/api/") &&
+        !request.url.includes("/api/Usuarios/perfil")
+    ) {
+
+        const cache = await caches.open(CACHE_NAME);
+
+        // 1️⃣ responder cache inmediato
         const cached = await cache.match(request);
         if (cached) return cached;
 
+        // 2️⃣ red → cache
         try {
             const response = await fetch(request);
             cache.put(request, response.clone());
             return response;
         } catch {
+            // 3️⃣ fallback perfil vacío controlado
+            if (request.url.includes("/Usuarios/perfil")) {
+                return new Response(JSON.stringify({
+                    nombre: "Sin conexión",
+                    correo: "",
+                    offline: true
+                }), { headers: { "Content-Type": "application/json" } });
+            }
+
             return new Response(JSON.stringify([]), {
                 headers: { "Content-Type": "application/json" }
             });
         }
     }
 
-    /* ===== LIKE OFFLINE ===== */
+
+    /* ===== 3. LIKE OFFLINE ===== */
     if (request.method === "POST" && request.url.includes("/like")) {
         try {
             return await fetch(request);
         } catch {
             const idParte = request.url.split("/parte/")[1].split("/")[0];
             const db = await abrirLikesDB();
-            const tx = db.transaction(STORE_NAME, "readwrite");
-            tx.objectStore(STORE_NAME).add({ idParte, fecha: Date.now() });
+            db.transaction("pendientes", "readwrite")
+                .objectStore("pendientes")
+                .add({ idParte, fecha: Date.now() });
 
             if ("sync" in self.registration) {
                 await self.registration.sync.register("sync-likes");
@@ -123,7 +158,7 @@ async function manejarFetch(request) {
         }
     }
 
-    /* ===== PERFIL PUT OFFLINE ===== */
+    /* ===== 4. PERFIL PUT OFFLINE ===== */
     if (request.method === "PUT" && request.url.includes("/api/Usuarios/perfil")) {
         try {
             return await fetch(request);
@@ -132,11 +167,9 @@ async function manejarFetch(request) {
             const campo = request.url.includes("nombre") ? "nombre" : "correo";
 
             const db = await abrirPerfilDB();
-            const tx = db.transaction(PROFILE_QUEUE, "readwrite");
-            tx.objectStore(PROFILE_QUEUE).add({
-                campo,
-                valor: body.Nombre || body.Correo
-            });
+            db.transaction("perfilPendiente", "readwrite")
+                .objectStore("perfilPendiente")
+                .add({ campo, valor: body.Nombre || body.Correo });
 
             if ("sync" in self.registration) {
                 await self.registration.sync.register("sync-perfil");
@@ -148,22 +181,34 @@ async function manejarFetch(request) {
         }
     }
 
-    /* ===== IMÁGENES PERFIL ===== */
-    if (request.destination === "image" && request.url.includes("/fotoPerfil/")) {
-        const fotoCache = await caches.open(FOTO_CACHE);
-        const cached = await fotoCache.match(request);
+    /* ===== 5. FOTO PERFIL (CACHE FIRST REAL) ===== */
+    if (
+        request.method === "GET" &&
+        (
+            request.url.includes("/Usuarios/perfil/foto") ||
+            request.url.includes("/fotoPerfil/")
+        )
+    ) {
+        const cache = await caches.open(FOTO_CACHE);
+
+        // 1️⃣ cache inmediato
+        const cached = await cache.match(request);
         if (cached) return cached;
 
+        // 2️⃣ red → cache
         try {
             const response = await fetch(request);
-            fotoCache.put(request, response.clone());
+            cache.put(request, response.clone());
             return response;
         } catch {
-            return cache.match("fotoPerfil/perfil.png");
+            // 3️⃣ fallback imagen default
+            return caches.match("fotoPerfil/perfil.png");
         }
     }
 
-    /* ===== ARCHIVOS ESTÁTICOS ===== */
+
+    /* ===== 6. ESTÁTICOS ===== */
+    const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(request);
     if (cached) return cached;
 
@@ -175,123 +220,117 @@ async function manejarFetch(request) {
 }
 
 /* =========================
-   SYNC
+   BACKGROUND SYNC
 ========================= */
 self.addEventListener("sync", event => {
-    if (event.tag === "sync-likes") {
-        event.waitUntil(enviarLikesPendientes());
+    if (event.tag === "sync-likes") event.waitUntil(enviarLikesPendientes());
+    if (event.tag === "sync-perfil") event.waitUntil(enviarPerfilPendiente());
+   
+});
+
+self.addEventListener("message", event => {
+     if (event.data?.tipo === "FORZAR_SYNC_PERFIL") {
+        enviarPerfilPendiente();
     }
-    if (event.tag === "sync-perfil") {
-        event.waitUntil(enviarPerfilPendiente());
+    if (event.data?.tipo === "TOKEN") {
+        self.token = event.data.token;
     }
 });
+
 
 /* =========================
    DB HELPERS
 ========================= */
 function abrirLikesDB() {
     return new Promise(resolve => {
-        const req = indexedDB.open(DB_NAME, 2);
-        req.onupgradeneeded = e => {
-            e.target.result.createObjectStore(STORE_NAME, {
-                keyPath: "id",
-                autoIncrement: true
-            });
-        };
+        const req = indexedDB.open("likesDB", 1);
+        req.onupgradeneeded = e =>
+            e.target.result.createObjectStore("pendientes", { autoIncrement: true });
         req.onsuccess = () => resolve(req.result);
     });
 }
 
 function abrirPerfilDB() {
     return new Promise(resolve => {
-        const req = indexedDB.open(PROFILE_DB, 2);
-        req.onupgradeneeded = e => {
-            e.target.result.createObjectStore(PROFILE_QUEUE, {
-                keyPath: "id",
-                autoIncrement: true
-            });
-        };
+        const req = indexedDB.open("perfilDB", 1);
+        req.onupgradeneeded = e =>
+            e.target.result.createObjectStore("perfilPendiente", { autoIncrement: true });
         req.onsuccess = () => resolve(req.result);
     });
 }
 
-/* =========================
-   ENVIAR LIKES
-========================= */
-async function enviarLikesPendientes() {
-    const token = await obtenerToken();
-    if (!token) return;
-
-    const db = await abrirLikesDB();
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const likes = await tx.objectStore(STORE_NAME).getAll();
-
-    for (const l of likes) {
-        await fetch(
-            `https://myvexbooks2.duckdns.org/api/Libros/parte/${l.idParte}/like`,
-            { method: "POST", headers: { Authorization: `Bearer ${token}` } }
-        );
-    }
-
-    db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME).clear();
+function eventWaitUntilSafe(promise) {
+    try {
+        self.registration.active && self.registration.active.waitUntil?.(promise);
+    } catch { }
 }
 
-/* =========================
-   ENVIAR PERFIL
-========================= */
 async function enviarPerfilPendiente() {
-    const token = await obtenerToken();
-    if (!token) return;
-
-    const db = await abrirPerfilDB();
-    const tx = db.transaction(PROFILE_QUEUE, "readonly");
-    const cambios = await tx.objectStore(PROFILE_QUEUE).getAll();
-
-    for (const c of cambios) {
-        const url = c.campo === "nombre"
-            ? "/api/Usuarios/perfil/nombre"
-            : "/api/Usuarios/perfil/correo";
-
-        const body = c.campo === "nombre"
-            ? { Nombre: c.valor }
-            : { Correo: c.valor };
-
-        await fetch(url, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(body)
-        });
-    }
-
-    db.transaction(PROFILE_QUEUE, "readwrite")
-        .objectStore(PROFILE_QUEUE)
-        .clear();
-}
-
-/* =========================
-   TOKEN
-========================= */
-async function obtenerToken() {
-    if (tokenGlobal) return tokenGlobal;
-
-    const clientsList = await clients.matchAll({ type: "window" });
-    clientsList.forEach(c => c.postMessage({ tipo: "PEDIR_TOKEN" }));
-
-    return new Promise(resolve => {
-        const i = setInterval(() => {
-            if (tokenGlobal) {
-                clearInterval(i);
-                resolve(tokenGlobal);
-            }
-        }, 100);
+    const db = await new Promise(resolve => {
+        const req = indexedDB.open("perfilDB", 2);
+        req.onsuccess = () => resolve(req.result);
     });
+
+    const tx = db.transaction("perfilPendiente", "readwrite");
+    const store = tx.objectStore("perfilPendiente");
+
+    const pendientes = await new Promise(resolve => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+    });
+
+    if (!pendientes.length) return;
+
+    for (const item of pendientes) {
+        try {
+
+            /* ===== FOTO PERFIL ===== */
+            if (item.campo === "foto") {
+                const blob = base64ToBlob(item.valor);
+                const formData = new FormData();
+                formData.append("Archivo", blob, "perfil.jpg");
+
+                await fetch("/api/Usuarios/perfil/foto", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": self.token ? `Bearer ${self.token}` : ""
+                    },
+                    body: formData
+                });
+
+                store.delete(item.id); // 👈 AHORA SÍ SE BORRA
+                continue;
+            }
+
+
+            /* ===== CAMPOS TEXTO ===== */
+            let url = "";
+            let body = {};
+
+            if (item.campo === "nombre") {
+                url = "/api/Usuarios/perfil/nombre";
+                body = { Nombre: item.valor };
+            }
+
+            if (item.campo === "correo") {
+                url = "/api/Usuarios/perfil/correo";
+                body = { Correo: item.valor };
+            }
+
+            await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": self.token ? `Bearer ${self.token}` : ""
+                },
+                body: JSON.stringify(body)
+            });
+
+            store.delete(item.id);
+
+        } catch (err) {
+            console.warn("Aún offline, se reintentará luego");
+        }
+    }
 }
 
-self.addEventListener("message", e => {
-    if (e.data?.tipo === "TOKEN") {
-        tokenGlobal = e.data.token;
-    }
-});

@@ -360,6 +360,12 @@
             img.onerror = () => img.src = fallback;
         }
 
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.active?.postMessage({ tipo: "FORZAR_CACHE_LIMPIO" });
+            });
+        }
+
 
 
         document.addEventListener("DOMContentLoaded", async () => {

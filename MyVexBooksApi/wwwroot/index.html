@@ -118,6 +118,7 @@
 
               
                 localStorage.setItem("token", data.token);
+                localStorage.setItem("correoUsuario", correo); // <- importante
 
            
                 window.location.href = "home.html";
@@ -127,6 +128,7 @@
                 console.log(error);
             }
         });
+
     </script>
 </body>
 </html>
