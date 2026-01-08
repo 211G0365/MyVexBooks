@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <img src="img/perfil.png" class="perfil" id="perfil">
+        <img src="fotoPerfil/perfil.png" class="perfil" id="perfil">
     </header>
 
     <main class="mainLibro">
@@ -115,7 +115,19 @@
                 document.getElementById("imgPortada").src = libro.portadaURL || "img/libro1.jpg";
                 document.getElementById("tituloLibro").textContent = libro.titulo;
                 document.getElementById("autorLibro").textContent = libro.autor;
-                document.getElementById("likesLibro").textContent = libro.likes || 0;
+                let likesBase = libro.likes || 0;
+
+                // 🔁 ajustar con likes offline
+                const pendientes = await obtenerLikesPendientesPorLibro(libro.partes || []);
+
+                pendientes.forEach(p => {
+                    if (p.accion === "like") likesBase += 1;
+                    if (p.accion === "unlike") likesBase -= 1;
+                });
+                likesBase = Math.max(0, likesBase);
+
+                document.getElementById("likesLibro").textContent = likesBase;
+
                 document.getElementById("partesLibro").textContent = `${libro.partes?.length || 0} partes`;
                 document.getElementById("sinopsis").innerHTML = `<p>${libro.sinopsis}</p>`;
 
@@ -148,6 +160,10 @@
                 console.error("Error cargando libro:", err);
             }
         }
+
+        window.addEventListener("online", () => {
+            cargarLibro();
+        });
 
 
         async function cargarGeneros() {
@@ -282,43 +298,120 @@
             if (!img) return;
 
             const fallback = "fotoPerfil/perfil.png";
-            const online = navigator.onLine;
 
+            /* =========================
+               1️⃣ INTENTAR OFFLINE (IDB)
+            ========================= */
             try {
-                const res = await fetch(
-                    "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto",
-                    { headers }
-                );
+                const db = await abrirPerfilDB();
 
-                if (!res.ok) throw new Error("No se pudo obtener la foto");
+                const pendientes = await new Promise(res => {
+                    const tx = db.transaction("perfilPendiente", "readonly");
+                    const store = tx.objectStore("perfilPendiente");
+                    const r = store.getAll();
+                    r.onsuccess = () => res(r.result || []);
+                    r.onerror = () => res([]);
+                });
 
-                const data = await res.json();
+                const fotoPendiente = pendientes
+                    .filter(p => p.campo === "foto")
+                    .sort((a, b) => b.fecha - a.fecha)[0];
 
-                let url = data?.fotoURL
-                    ? data.fotoURL
-                    : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
+                if (fotoPendiente?.blob) {
+                    const url = URL.createObjectURL(fotoPendiente.blob);
+                    img.onload = () => URL.revokeObjectURL(url);
+                    img.src = url;
+                    return; // ⛔ no seguir
+                }
 
-                url = url.replace("http://", "https://");
-
-                // SOLO refrescar cuando hay red
-                const finalUrl = online ? `${url}?t=${Date.now()}` : url;
-
-                img.src = finalUrl;
-
-                // Guardar base para offline
-                localStorage.setItem("fotoPerfilURL", url);
-
-            } catch (err) {
-                console.warn("Usando foto offline o fallback");
-
-                const cachedURL = localStorage.getItem("fotoPerfilURL");
-
-                img.src = cachedURL || fallback;
+            } catch (e) {
+                console.warn("No se pudo leer foto offline", e);
             }
 
-            // fallback visual seguro
-            img.onerror = () => img.src = fallback;
+            /* =========================
+               2️⃣ ARCHIVO ESTÁTICO
+            ========================= */
+            const userId = localStorage.getItem("idUsuario");
+            if (!userId) {
+                img.src = fallback;
+                return;
+            }
+
+            const bust = navigator.onLine ? `?t=${Date.now()}` : "";
+            const url = `fotoPerfil/usuario_${userId}.webp${bust}`;
+
+            img.src = url;
+
+            /* =========================
+               3️⃣ FALLBACK SEGURO
+            ========================= */
+            img.onerror = () => {
+                img.src = fallback;
+            };
         }
+        window.addEventListener("online", async () => {
+            await cargarFotoPerfilHome();
+        });
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.active?.postMessage({ tipo: "FORZAR_CACHE_LIMPIO" });
+            });
+        }
+
+        function abrirPerfilDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open("perfilDB", 4);
+
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+
+                    if (!db.objectStoreNames.contains("perfil")) {
+                        db.createObjectStore("perfil", { keyPath: "id" });
+                    }
+
+                    if (!db.objectStoreNames.contains("perfilPendiente")) {
+                        db.createObjectStore("perfilPendiente", {
+                            keyPath: "id",
+                            autoIncrement: true
+                        });
+                    }
+                };
+
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function abrirLikesDB() {
+            return new Promise(resolve => {
+                const req = indexedDB.open("likesDB", 5);
+                req.onsuccess = () => resolve(req.result);
+            });
+        }
+
+        async function obtenerLikesPendientesPorLibro(partesLibro) {
+            try {
+                const db = await abrirLikesDB();
+                const tx = db.transaction("pendientes", "readonly");
+                const store = tx.objectStore("pendientes");
+
+                const pendientes = await new Promise(res => {
+                    const r = store.getAll();
+                    r.onsuccess = () => res(r.result || []);
+                    r.onerror = () => res([]);
+                });
+
+                const idsPartes = new Set(partesLibro.map(p => String(p.idParte)));
+
+                return pendientes.filter(p =>
+                    idsPartes.has(String(p.idParte))
+                );
+            } catch {
+                return [];
+            }
+        }
+
 
 
         document.addEventListener("DOMContentLoaded", () => {

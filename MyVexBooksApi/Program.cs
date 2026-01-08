@@ -20,7 +20,7 @@ builder.Services.AddAutoMapper(config =>
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<ILibrosRepository, LibrosRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
-builder.Services.AddScoped<PushNotificationService>();
+builder.Services.AddSingleton<PushNotificationService>(); 
 builder.Services.AddSingleton<JwtHelper>();
 
 
@@ -48,20 +48,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .WithOrigins(
+                "https://localhost:44354",
+                "https://myvexbooks2.duckdns.org"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
+
 var app = builder.Build();
-app.UseCors("AllowAll");
-app.UseStaticFiles();  
+
+app.UseStaticFiles();
+
 app.UseRouting();
+
+app.UseCors("AllowFrontend"); // ?? AQUÍ, no arriba
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-app.MapFallbackToFile("index.html"); 
+app.MapFallbackToFile("index.html");
+
 app.Run();

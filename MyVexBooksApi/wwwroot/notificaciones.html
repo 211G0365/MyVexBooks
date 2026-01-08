@@ -74,27 +74,89 @@
 
             const fallback = "fotoPerfil/perfil.png";
 
-            const saved = localStorage.getItem("fotoPerfilURL");
-            if (saved) img.src = saved;
-
+            /* =========================
+               1️⃣ INTENTAR OFFLINE (IDB)
+            ========================= */
             try {
-                const res = await fetch(
-                    "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto",
-                    { headers }
-                );
+                const db = await abrirPerfilDB();
 
-                const data = await res.json();
-                let url = data.fotoURL.startsWith("http")
-                    ? data.fotoURL
-                    : "https://myvexbooks2.duckdns.org" + data.fotoURL;
+                const pendientes = await new Promise(res => {
+                    const tx = db.transaction("perfilPendiente", "readonly");
+                    const store = tx.objectStore("perfilPendiente");
+                    const r = store.getAll();
+                    r.onsuccess = () => res(r.result || []);
+                    r.onerror = () => res([]);
+                });
 
-                img.src = `${url}?t=${Date.now()}`;
-                localStorage.setItem("fotoPerfilURL", url);
-            } catch {
-                img.src = saved || fallback;
+                const fotoPendiente = pendientes
+                    .filter(p => p.campo === "foto")
+                    .sort((a, b) => b.fecha - a.fecha)[0];
+
+                if (fotoPendiente?.blob) {
+                    const url = URL.createObjectURL(fotoPendiente.blob);
+                    img.onload = () => URL.revokeObjectURL(url);
+                    img.src = url;
+                    return; // ⛔ no seguir
+                }
+
+            } catch (e) {
+                console.warn("No se pudo leer foto offline", e);
             }
 
-            img.onerror = () => img.src = fallback;
+            /* =========================
+               2️⃣ ARCHIVO ESTÁTICO
+            ========================= */
+            const userId = localStorage.getItem("idUsuario");
+            if (!userId) {
+                img.src = fallback;
+                return;
+            }
+
+            const bust = navigator.onLine ? `?t=${Date.now()}` : "";
+            const url = `fotoPerfil/usuario_${userId}.webp${bust}`;
+
+            img.src = url;
+
+            /* =========================
+               3️⃣ FALLBACK SEGURO
+            ========================= */
+            img.onerror = () => {
+                img.src = fallback;
+            };
+        }
+        window.addEventListener("online", async () => {
+            await cargarFotoPerfilHome();
+        });
+
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.active?.postMessage({ tipo: "FORZAR_CACHE_LIMPIO" });
+            });
+        }
+
+        function abrirPerfilDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open("perfilDB", 4);
+
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+
+                    if (!db.objectStoreNames.contains("perfil")) {
+                        db.createObjectStore("perfil", { keyPath: "id" });
+                    }
+
+                    if (!db.objectStoreNames.contains("perfilPendiente")) {
+                        db.createObjectStore("perfilPendiente", {
+                            keyPath: "id",
+                            autoIncrement: true
+                        });
+                    }
+                };
+
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
         }
 
 

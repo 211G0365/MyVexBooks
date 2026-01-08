@@ -19,19 +19,32 @@ namespace MyVexBooks.Controllers.api
         [HttpGet("publickey")]
         public IActionResult GetPublicKey()
         {
-            return Ok(Service.GetPublicKey());
+            try
+            {
+                var key = Service.GetPublicKey();
+                return Ok(key);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error GetPublicKey: " + ex);
+                return StatusCode(500, "Error interno al obtener la clave pública");
+            }
         }
+
+
 
         [HttpPost]
         public IActionResult Post(SubscriptionDTO dto)
         {
-     
+            //Validar
 
             Service.Suscribir(dto);
             return Ok();
         }
 
-   
+
+
+
         [HttpPost("desuscribir")]
         public IActionResult Desuscribir(SubscriptionDTO dto)
         {

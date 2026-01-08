@@ -25,7 +25,7 @@
 
 
             <div class="botonesS">
-                <input type="submit" id="iniciarSesion" value="Iniciar Sesión">
+                <input  type="button" id="iniciarSesion" value="Iniciar Sesión">
                 <a href="registrarse.html" id="registrarse">Crear cuenta</a>
             </div>
         </div>
@@ -42,27 +42,27 @@
         async function registrarPush() {
             if (!("serviceWorker" in navigator)) return;
 
-            const sw = await navigator.serviceWorker.register("sw.js");
+            const reg = await navigator.serviceWorker.ready;
 
             const permiso = await Notification.requestPermission();
             if (permiso !== "granted") return;
 
-            const publicKey = await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones/publickey")
-                .then(r => r.text());
+            const publicKey = await fetch(
+                "https://myvexbooks2.duckdns.org/api/Notificaciones/publickey"
+            ).then(r => r.text());
 
-            const suscripcion = await sw.pushManager.subscribe({
+            const suscripcion = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlB64ToUint8Array(publicKey)
             });
 
             await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(suscripcion)
             });
         }
+
 
         // Conversión clave VAPID
         function urlB64ToUint8Array(base64String) {
@@ -91,6 +91,11 @@
             IconoLibro.src = mostrando ? "img/libro-abierto.png" : "img/libro-cerrado.png";
         });
 
+        function obtenerIdUsuarioDesdeToken(token) {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            return payload.IdUsuario || payload.nameid;
+        }
+
   
         document.getElementById("iniciarSesion").addEventListener("click", async () => {
 
@@ -117,11 +122,27 @@
                 }
 
               
+              
                 localStorage.setItem("token", data.token);
-                localStorage.setItem("correoUsuario", correo); // <- importante
+                const idUsuario = obtenerIdUsuarioDesdeToken(data.token);
+                localStorage.setItem("idUsuario", idUsuario);
 
-           
+                localStorage.setItem("correoUsuario", correo);
+
+                // 🔑 enviar token al SW
+                if ("serviceWorker" in navigator) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.active?.postMessage({
+                            tipo: "TOKEN",
+                            token: data.token
+                        });
+                    });
+                }
+
                 window.location.href = "home.html";
+                await registrarPush();
+               
+
 
             } catch (error) {
                 alert("No se pudo conectar con el servidor.");

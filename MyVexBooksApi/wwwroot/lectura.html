@@ -52,18 +52,22 @@
                 <h2>Prólogo: Cuerda de presos</h2>
                 <span class="spanLibroCap">
                     <img src="img/likes.png" class="likesCap" id="likes" />
-                    0
+                    <span id="likesNumero">0</span>
                 </span>
+
                 <img src="img/lista.png" class="btnLista" />
             </div>
 
             <div class="divTexto">
-                <p>
-
-                </p>
+                <p id="textoLectura"></p>
             </div>
 
             <button class="continuar">continuar</button>
+
+            <div class="divZoom">
+                <img src="img/zoom in.png" id="btnAumentar" />
+                <img src="img/zoom out.png" id="btnDisminuir" />
+            </div>
 
             <aside class="sidebar" id="sidebar">
                 <img src="img/lista.png" class="btnListaSidebar" />
@@ -71,7 +75,6 @@
                 <h4>Contenido</h4>
 
                 <ul class="listaCapitulos">
-          
                 </ul>
             </aside>
         </div>
@@ -113,7 +116,11 @@
 
                 // Likes
                 const spanLikes = document.getElementById("likes");
-                spanLikes.nextSibling.textContent = parte.likes || 0;
+                const likesBackend = parte.likes ?? 0;
+                document.getElementById("likesNumero").textContent = likesBackend;
+
+                await inicializarLikes(likesBackend);
+
                 await cargarListaPartes(parte.idLibro);
 
           
@@ -282,12 +289,7 @@
             btnListaSidebar.addEventListener("click", toggleSidebar);
 
             // Likes
-            const corazon = document.getElementById("likes");
-            let latiendo = false;
-            corazon.addEventListener("click", () => {
-                latiendo = !latiendo;
-                corazon.classList.toggle("latiendo", latiendo);
-            });
+          
 
             document.getElementById("perfil").onclick = () => window.location.href = "perfil.html";
             document.getElementById("logo").onclick = () => window.location.href = "home.html";
@@ -295,79 +297,226 @@
 
         async function inicializarLikes() {
             const corazon = document.getElementById("likes");
-            const spanNumero = corazon.nextSibling;
+            const spanNumero = document.getElementById("likesNumero");
 
             let liked = false;
-
+            let likesActuales = 0;
 
             try {
-                const resp = await fetch(`https://myvexbooks2.duckdns.org/api/Libros/parte/${idParte}/like`, { headers });
-                const data = await resp.json();
-                liked = data.liked;
-                corazon.classList.toggle("latiendo", liked);
-            } catch (err) {
-                console.error("Error verificando like:", err);
+                // 1️⃣ obtener estado real del usuario
+                const likeResp = await fetch(
+                    `/api/Libros/parte/${idParte}/like`,
+                    { headers }
+                );
+                const likeData = await likeResp.json();
+                liked = likeData.liked;
+
+                // 2️⃣ obtener contador real
+                const parteResp = await fetch(
+                    `/api/Libros/parte/${idParte}`,
+                    { headers }
+                );
+                const parteData = await parteResp.json();
+                likesActuales = parteData.likes;
+
+            } catch {
+                console.warn("Offline: usando estado local");
+                likesActuales = parseInt(spanNumero.textContent) || 0;
             }
 
-            corazon.addEventListener("click", async () => {
+            // render inicial CONSISTENTE
+            spanNumero.textContent = likesActuales;
+            corazon.classList.toggle("latiendo", liked);
+
+            corazon.onclick = async () => {
+                // 🔒 BLOQUEO anti-doble click
+                if (corazon.dataset.locked === "1") return;
+                corazon.dataset.locked = "1";
+
+                const accion = liked ? "unlike" : "like";
+
+                // UI optimista
+                liked = !liked;
+                likesActuales += accion === "like" ? 1 : -1;
+                likesActuales = Math.max(0, likesActuales);
+
+                spanNumero.textContent = likesActuales;
+                corazon.classList.toggle("latiendo", liked);
+
                 try {
-                    const resp = await fetch(`https://myvexbooks2.duckdns.org/api/Libros/parte/${idParte}/like`, {
+                    await fetch(`/api/Libros/parte/${idParte}/like`, {
                         method: "POST",
-                        headers
+                        headers: {
+                            ...headers,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ accion })
                     });
-                    const data = await resp.json();
-                    liked = data.liked;
-                    corazon.classList.toggle("latiendo", liked);
-                    spanNumero.textContent = data.likes;
-                } catch (err) {
-                    console.error("Error togglando like:", err);
+                } catch {
+                    console.log("Like guardado offline");
                 }
-            });
+
+                corazon.dataset.locked = "0";
+            };
         }
+
+
+        window.addEventListener("online", () => {
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.active?.postMessage({ tipo: "SYNC_LIKES" });
+                });
+            }
+        });
+
 
         async function cargarFotoPerfilHome() {
             const img = document.getElementById("perfil");
             if (!img) return;
 
             const fallback = "fotoPerfil/perfil.png";
-            const online = navigator.onLine;
 
+            /* =========================
+               1️⃣ INTENTAR OFFLINE (IDB)
+            ========================= */
             try {
-                const res = await fetch(
-                    "https://myvexbooks2.duckdns.org/api/Usuarios/perfil/foto",
-                    { headers }
-                );
+                const db = await abrirPerfilDB();
 
-                if (!res.ok) throw new Error("No se pudo obtener la foto");
+                const pendientes = await new Promise(res => {
+                    const tx = db.transaction("perfilPendiente", "readonly");
+                    const store = tx.objectStore("perfilPendiente");
+                    const r = store.getAll();
+                    r.onsuccess = () => res(r.result || []);
+                    r.onerror = () => res([]);
+                });
 
-                const data = await res.json();
+                const fotoPendiente = pendientes
+                    .filter(p => p.campo === "foto")
+                    .sort((a, b) => b.fecha - a.fecha)[0];
 
-                let url = data?.fotoURL
-                    ? data.fotoURL
-                    : "https://myvexbooks2.duckdns.org/fotoPerfil/perfil.png";
+                if (fotoPendiente?.blob) {
+                    const url = URL.createObjectURL(fotoPendiente.blob);
+                    img.onload = () => URL.revokeObjectURL(url);
+                    img.src = url;
+                    return; // ⛔ no seguir
+                }
 
-                // Asegurar HTTPS absoluto
-                url = url.replace("http://", "https://");
-
-                // SOLO refrescar cuando hay red
-                const finalUrl = online ? `${url}?t=${Date.now()}` : url;
-
-                img.src = finalUrl;
-
-                // Guardar base para offline
-                localStorage.setItem("fotoPerfilURL", url);
-
-            } catch (err) {
-                console.warn("Usando foto offline o fallback");
-
-                const cachedURL = localStorage.getItem("fotoPerfilURL");
-
-                img.src = cachedURL || fallback;
+            } catch (e) {
+                console.warn("No se pudo leer foto offline", e);
             }
 
-            // fallback visual seguro
-            img.onerror = () => img.src = fallback;
+            /* =========================
+               2️⃣ ARCHIVO ESTÁTICO
+            ========================= */
+            const userId = localStorage.getItem("idUsuario");
+            if (!userId) {
+                img.src = fallback;
+                return;
+            }
+
+            const bust = navigator.onLine ? `?t=${Date.now()}` : "";
+            const url = `fotoPerfil/usuario_${userId}.webp${bust}`;
+
+            img.src = url;
+
+            /* =========================
+               3️⃣ FALLBACK SEGURO
+            ========================= */
+            img.onerror = () => {
+                img.src = fallback;
+            };
         }
+        window.addEventListener("online", async () => {
+            await cargarFotoPerfilHome();
+        });
+
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.active?.postMessage({ tipo: "FORZAR_CACHE_LIMPIO" });
+            });
+        }
+
+        function abrirPerfilDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open("perfilDB", 4);
+
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+
+                    if (!db.objectStoreNames.contains("perfil")) {
+                        db.createObjectStore("perfil", { keyPath: "id" });
+                    }
+
+                    if (!db.objectStoreNames.contains("perfilPendiente")) {
+                        db.createObjectStore("perfilPendiente", {
+                            keyPath: "id",
+                            autoIncrement: true
+                        });
+                    }
+                };
+
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+
+
+        // Código para aumentar y disminuir el tamaño del texto
+        const texto = document.getElementById("textoLectura");
+        const btnAumentar = document.getElementById("btnAumentar");
+        const btnDisminuir = document.getElementById("btnDisminuir");
+
+        let tamañoActual = 13;
+        const tamañoMin = 10;
+        const tamañoMax = 20;
+
+        function actualizarEstadoBotones() {
+            // Aumentar
+            if (tamañoActual >= tamañoMax) {
+                btnAumentar.classList.add("btnDeshabilitado");
+            } else {
+                btnAumentar.classList.remove("btnDeshabilitado");
+            }
+
+            // Disminuir
+            if (tamañoActual <= tamañoMin) {
+                btnDisminuir.classList.add("btnDeshabilitado");
+            } else {
+                btnDisminuir.classList.remove("btnDeshabilitado");
+            }
+        }
+
+        btnAumentar.addEventListener("click", () => {
+            if (tamañoActual < tamañoMax) {
+                tamañoActual += 1;
+                texto.style.fontSize = tamañoActual + "px";
+                actualizarEstadoBotones();
+            }
+        });
+
+        btnDisminuir.addEventListener("click", () => {
+            if (tamañoActual > tamañoMin) {
+                tamañoActual -= 1;
+                texto.style.fontSize = tamañoActual + "px";
+                actualizarEstadoBotones();
+            }
+        });
+
+        window.addEventListener("online", async () => {
+            try {
+                const resp = await fetch(
+                    `https://myvexbooks2.duckdns.org/api/Libros/parte/${idParte}`,
+                    { headers }
+                );
+                if (resp.ok) {
+                    const parte = await resp.json();
+                    document.getElementById("likesNumero").textContent = parte.likes ?? 0;
+                }
+            } catch { }
+        });
+
 
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -375,8 +524,8 @@
             cargarGeneros();
             configurarBuscador();
             configurarEventosEstaticos();
-            inicializarLikes();
             cargarFotoPerfilHome();
+
         });
     </script>
 </body>

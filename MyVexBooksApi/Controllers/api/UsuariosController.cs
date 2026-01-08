@@ -17,6 +17,7 @@ namespace MyVexBooks.Controllers.api
         private readonly IUsuarioService service;
         private readonly IWebHostEnvironment env;
 
+        private static readonly SemaphoreSlim _fotoLock = new(1, 1);
         public UsuariosController(IUsuarioService service, IWebHostEnvironment env)
         {
             this.service = service;
@@ -100,73 +101,62 @@ namespace MyVexBooks.Controllers.api
         [HttpPost("perfil/foto")]
         public async Task<IActionResult> SubirFoto([FromForm(Name = "foto")] IFormFile Archivo)
         {
-            if (Archivo == null || Archivo.Length == 0)
-                return BadRequest(new { error = "No se envió ninguna imagen" });
+            await _fotoLock.WaitAsync();
+            try
+            {
+                if (Archivo == null || Archivo.Length == 0)
+                    return BadRequest(new { error = "No se envió ninguna imagen" });
 
-            // 🛑 límite de peso (5 MB)
-            if (Archivo.Length > 5 * 1024 * 1024)
-                return BadRequest(new { error = "La imagen es demasiado grande" });
+                if (Archivo.Length > 5 * 1024 * 1024)
+                    return BadRequest(new { error = "La imagen pesa más de 5MB" });
 
-            var idUsuario = int.Parse(User.FindFirst("IdUsuario")!.Value);
+                var idUsuario = int.Parse(User.FindFirst("IdUsuario")!.Value);
 
-            var carpeta = Path.Combine(env.WebRootPath, "fotoPerfil");
-            if (!Directory.Exists(carpeta))
+                var carpeta = Path.Combine(env.WebRootPath, "fotoPerfil");
                 Directory.CreateDirectory(carpeta);
 
-            // 🔥 borrar fotos anteriores
-            var anteriores = Directory.GetFiles(carpeta, $"usuario_{idUsuario}.*");
-            foreach (var f in anteriores)
-                System.IO.File.Delete(f);
+                var nombreFinal = $"usuario_{idUsuario}.webp";
+                var rutaFinal = Path.Combine(carpeta, nombreFinal);
+                var rutaTemp = Path.Combine(carpeta, $"{Guid.NewGuid()}.tmp.webp");
 
-            // 📥 cargar imagen
-            using var image = await Image.LoadAsync(Archivo.OpenReadStream());
+                Image image;
+                try
+                {
+                    await using var stream = Archivo.OpenReadStream();
+                    image = await Image.LoadAsync(stream);
+                }
+                catch
+                {
+                    return BadRequest(new { error = "Imagen inválida o demasiado grande" });
+                }
 
-            // 🔧 redimensionar (cuadrada)
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new Size(512, 512),
-                Mode = ResizeMode.Crop
-            }));
+                if (image.Width > 6000 || image.Height > 6000)
+                {
+                    image.Dispose();
+                    return BadRequest(new { error = "Resolución máxima: 6000x6000" });
+                }
 
-            // 📁 nombre fijo
-            var nombreArchivo = $"usuario_{idUsuario}.webp";
-            var ruta = Path.Combine(carpeta, nombreArchivo);
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new Size(512, 512),
+                    Mode = ResizeMode.Crop
+                }));
 
-            // 💾 guardar como WEBP
-            await image.SaveAsync(ruta, new WebpEncoder
-            {
-                Quality = 75
-            });
+                await image.SaveAsync(rutaTemp, new WebpEncoder { Quality = 75 });
+                image.Dispose();
 
-            // 🧠 cache-buster para el frontend
-            var url = $"{Request.Scheme}://{Request.Host}/fotoPerfil/{nombreArchivo}?v={DateTime.UtcNow.Ticks}";
+                if (System.IO.File.Exists(rutaFinal))
+                    System.IO.File.Delete(rutaFinal);
 
-            return Ok(new { fotoURL = url });
-        }
+                System.IO.File.Move(rutaTemp, rutaFinal);
 
-
-
-
-        [Authorize]
-        [HttpGet("perfil/foto")]
-        public IActionResult ObtenerFoto()
-        {
-            var idUsuario = int.Parse(User.FindFirst("IdUsuario")!.Value);
-            var carpeta = Path.Combine(env.WebRootPath, "fotoPerfil");
-
-            var ruta = Path.Combine(carpeta, $"usuario_{idUsuario}.webp");
-
-            if (System.IO.File.Exists(ruta))
-            {
-                var url = $"{Request.Scheme}://{Request.Host}/fotoPerfil/usuario_{idUsuario}.webp";
-                return Ok(new { fotoURL = url });
+                return Ok(new { ok = true });
             }
-
-            var defaultURL = $"{Request.Scheme}://{Request.Host}/fotoPerfil/perfil.png";
-            return Ok(new { fotoURL = defaultURL });
+            finally
+            {
+                _fotoLock.Release();
+            }
         }
-
-
 
 
 

@@ -16,18 +16,45 @@ namespace MyVexBooks.Services
         {
             Repository = repository;
             Configuration = configuration;
-            vapid = new VapidDetails
-            {
-                PrivateKey = configuration["VapidKeys:privateKey"],
-                PublicKey = configuration["VapidKeys:publicKey"],
-                Subject = configuration["VapidKeys:subject"]
-            };
 
+            try
+            {
+                var privateKey = configuration["VAPID:privateKey"];
+                var publicKey = configuration["VAPID:publicKey"];
+                var subject = configuration["VAPID:subject"];
+
+                if (string.IsNullOrEmpty(privateKey) || string.IsNullOrEmpty(publicKey) || string.IsNullOrEmpty(subject))
+                {
+                    Console.WriteLine("ERROR: Configuración VAPID incompleta.");
+                    Console.WriteLine($"privateKey: {privateKey}");
+                    Console.WriteLine($"publicKey: {publicKey}");
+                    Console.WriteLine($"subject: {subject}");
+                }
+                else
+                {
+                    Console.WriteLine("VAPID Configuración leída correctamente:");
+                    Console.WriteLine($"publicKey: {publicKey}");
+                    Console.WriteLine($"subject: {subject}");
+                }
+
+                vapid = new VapidDetails
+                {
+                    PrivateKey = privateKey,
+                    PublicKey = publicKey,
+                    Subject = subject
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR al crear VapidDetails: " + ex);
+                throw;
+            }
         }
 
         public void Suscribir(SubscriptionDTO dto)
         {
             var entidad = Repository.GetAll().FirstOrDefault(x => x.Endpoint == dto.Endpoint);
+
             if (entidad == null)
             {
                 entidad = new Notificaciones
@@ -39,50 +66,70 @@ namespace MyVexBooks.Services
                     FechaCreacion = DateTime.Now
                 };
                 Repository.Insert(entidad);
+                Console.WriteLine($"Nueva suscripción registrada: {dto.Endpoint}");
+            }
+            else
+            {
+                Console.WriteLine($"Suscripción ya existente: {dto.Endpoint}");
             }
         }
+
+        public void Desuscribir(string endpoint)
+        {
+            var entidad = Repository.GetAll().FirstOrDefault(x => x.Endpoint == endpoint);
+            if (entidad != null)
+            {
+                Repository.Delete(entidad);
+                Console.WriteLine($"Suscripción eliminada: {endpoint}");
+            }
+        }
+
         public string GetPublicKey()
         {
+            if (vapid == null || string.IsNullOrEmpty(vapid.PublicKey))
+            {
+                Console.WriteLine("WARNING: VapidDetails o PublicKey es null.");
+                return null;
+            }
+
+            Console.WriteLine($"GET PublicKey: {vapid.PublicKey}");
             return vapid.PublicKey;
         }
 
-
         public async Task EnviarMensaje(string titulo, string mensaje)
         {
-            var destinatarios = Repository.GetAll().Where(x => x.Activo==true).ToList();
+            var destinatarios = Repository.GetAll().Where(x => x.Activo == true).ToList();
+            Console.WriteLine($"Enviando mensaje a {destinatarios.Count} destinatarios.");
 
             foreach (var d in destinatarios)
             {
                 try
                 {
                     var cliente = new WebPushClient();
-                    var sub = new PushSubscription(d.Endpoint, d.P256dh, d.Auth);
+                    PushSubscription quien = new PushSubscription(d.Endpoint, d.P256dh, d.Auth);
 
-                    var message = new { titulo, mensaje };
-                    await cliente.SendNotificationAsync(sub, JsonSerializer.Serialize(message), vapid);
+                    var message = new
+                    {
+                        titulo = titulo,
+                        mensaje = mensaje
+                    };
 
-                  
+                    await cliente.SendNotificationAsync(quien, JsonSerializer.Serialize(message), vapid);
                     Repository.Update(d);
+
+                    Console.WriteLine($"Mensaje enviado a {d.Endpoint}");
                 }
                 catch (WebPushException ex)
                 {
+                    Console.WriteLine($"Error enviando a {d.Endpoint}: {ex.Message}");
                     if (ex.StatusCode == System.Net.HttpStatusCode.Gone)
                     {
                         Repository.Delete(d.Id);
+                        Console.WriteLine($"Suscripción eliminada por estar obsoleta: {d.Endpoint}");
                     }
                 }
             }
         }
-
-        public void Desuscribir(string endpoint)
-        {
-            var sub = Repository.GetAll().FirstOrDefault(x => x.Endpoint == endpoint);
-            if (sub != null)
-            {
-                sub.Activo = false;
-                Repository.Update(sub);
-            }
-        }
-
     }
+
 }
