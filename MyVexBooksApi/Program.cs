@@ -20,7 +20,7 @@ builder.Services.AddAutoMapper(config =>
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<ILibrosRepository, LibrosRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
-builder.Services.AddSingleton<PushNotificationService>(); 
+builder.Services.AddScoped<PushNotificationService>();
 builder.Services.AddSingleton<JwtHelper>();
 
 

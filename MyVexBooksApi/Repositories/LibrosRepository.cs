@@ -53,6 +53,11 @@ namespace MyVexBooks.Repositories
             Context.SaveChanges();
         }
 
+        public List<Libros> GetRecientes(int cantidad = 10)
+        {
+            return Context.Libros.ToList();
+        }
+
     }
 
 }

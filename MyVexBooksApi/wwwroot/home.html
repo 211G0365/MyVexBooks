@@ -160,9 +160,14 @@
             const puntoNuevo = document.getElementById("puntoNuevo");
 
             btnNoti.addEventListener("click", () => {
-                panelNoti.style.display = panelNoti.style.display === "block" ? "none" : "block";
-                if (puntoNuevo.style.display === "block") puntoNuevo.style.display = "none";
+                const isAbierto = panelNoti.style.display === "block";
+                panelNoti.style.display = isAbierto ? "none" : "block";
+
+                if (!isAbierto) {
+                    puntoNuevo.style.display = "none";
+                }
             });
+
 
             document.addEventListener("click", (e) => {
                 if (!e.target.closest(".divNotificaciones")) panelNoti.style.display = "none";
@@ -282,12 +287,9 @@
 
             let registro = await navigator.serviceWorker.register("sw.js");
 
-            //pedir permiso en el navegador
             const permission = await Notification.requestPermission();
 
             if (permission == "granted") {
-
-                //Solicitar la llave publicar para poder suscribirme
                 const response = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones/publickey");
                 if (response.ok) {
                     llave = await response.text();
@@ -299,31 +301,29 @@
                         applicationServerKey: urlBase64ToUint8Array(llave)
                     });
 
-                    let response = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones", {
+                    let response2 = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(subscription)
                     });
 
-
-                    if (response.ok) {
+                    if (response2.ok) {
                         console.log("suscrito a notificaciones");
                     }
                 }
-
                 navigator.serviceWorker.addEventListener("message", function (event) {
                     if (event.data.tipo === "RECIBIDA") {
-                        showToast(event.data.titulo);
-
-                        ////actualizar porque hubo cambios
-                        //cargarRecordatorios();
+                        console.log("Noti recibida:", event.data);
+                        mostrarNotificacionEnPanel(event.data);
                     }
                 });
-            }
 
-        }
 
-        // Función helper para convertir clave VAPID
+            } 
+
+        } 
+
+        // función helper fuera de registrar
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
             const base64 = (base64String + padding)
@@ -338,6 +338,35 @@
             }
             return outputArray;
         }
+
+
+        function mostrarNotificacionEnPanel({ titulo, mensaje, idLibro, portada }) {
+            const lista = document.getElementById("listaMensajes");
+            const sinMensajes = document.getElementById("sinMensajes");
+            const punto = document.getElementById("puntoNuevo");
+
+            if (sinMensajes) sinMensajes.style.display = "none";
+
+            const div = document.createElement("div");
+            div.className = "notificacionItem";
+
+            div.innerHTML = `
+        <img src="${portada || 'img/logo.png'}" class="notiPortada" />
+        <div class="notiTexto">
+            <p class="notiTitulo">${titulo}</p>
+            <p class="notiMensaje">${mensaje}</p>
+        </div>
+    `;
+
+            div.onclick = () => window.location.href = `libro.html?id=${idLibro}`;
+
+            lista.prepend(div);
+
+            // mostrar puntito rojo
+            if (punto) punto.style.display = "block";
+        }
+
+
 
 
 

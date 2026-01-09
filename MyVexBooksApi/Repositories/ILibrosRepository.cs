@@ -13,5 +13,6 @@ namespace MyVexBooks.Repositories
         void AgregarLike(Partelikes like);
         void EliminarLike(Partelikes like);
         void GuardarCambios();
+        List<Libros> GetRecientes(int cantidad = 10);
     }
 }

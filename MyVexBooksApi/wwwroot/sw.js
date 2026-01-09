@@ -574,30 +574,62 @@ async function enviarLikesPendientes() {
 }
 
 
-/* =========================
-PUSH NOTIFICATIONS
-========================= */
 self.addEventListener("push", event => {
-    if (!event.data) return;
-    const data = event.data.json();
+    let data = {};
+    try {
+        data = event.data.json();
+    } catch {
+        data = {
+            titulo: "Notificación",
+            mensaje: event.data.text(),
+            idLibro: null,
+            portada: null
+        };
+    }
 
-    // mostrar notificación
+    const tagUnico = `libro-${data.idLibro}-${Date.now()}`;
+
+    const options = {
+        body: data.mensaje || "",
+        icon: data.portada || "img/logo.png",
+        tag: tagUnico,
+        data: { idLibro: data.idLibro }
+    };
+
     event.waitUntil(
-        self.registration.showNotification(data.titulo, {
-            body: data.mensaje,
-            icon: 'iconos/512.png',
-            tag: data.tag || undefined
-        })
+        self.registration.showNotification(data.titulo || "Notificación", options)
+            .then(() => {
+                return self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
+                    clients.forEach(c => {
+                        c.postMessage({
+                            tipo: "RECIBIDA",
+                            titulo: data.titulo,
+                            mensaje: data.mensaje,
+                            idLibro: data.idLibro,
+                            portada: data.portada
+                        });
+                    });
+                });
+            })
     );
-
-    // mandar mensaje a clientes activos (para actualizar UI)
-    self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
-        clients.forEach(client => {
-            client.postMessage({
-                tipo: "RECIBIDA",
-                titulo: data.titulo,
-                mensaje: data.mensaje
-            });
-        });
-    });
 });
+
+
+
+
+self.addEventListener("notificationclick", event => {
+    console.log("CLICK NOTI:", event.notification.data); // 👈 AQUÍ
+
+    event.notification.close();
+
+    const idLibro = event.notification.data?.idLibro;
+
+    const url = idLibro
+        ? `/libro.html?id=${idLibro}`
+        : "/home.html";
+
+    event.waitUntil(
+        clients.openWindow(url)
+    );
+});
+
