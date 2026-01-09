@@ -455,7 +455,39 @@ body {
     transform: translateX(-40%);
     display: none;
     z-index: 1;
+    box-sizing: border-box;
 }
+
+    /* Mantener el título fijo */
+    .menuNotificaciones h3 {
+        margin: 0 0 8px 0;
+        padding: 5px;
+        text-align: center;
+    }
+
+/* Lista de notificaciones con scroll */
+.listaMensajes {
+    max-height: 180px; /* 250 - altura del h3 y paddings */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* separación entre notis */
+    padding-right: 5px; /* espacio para scrollbar */
+}
+
+    /* Scroll estilizado */
+    .listaMensajes::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .listaMensajes::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 3px;
+    }
+
+    .listaMensajes::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
     .menuNotificaciones h3 {
         font-family: 'Honking Personal Use Only';

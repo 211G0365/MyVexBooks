@@ -1,12 +1,7 @@
-﻿/* =========================
-   CONFIG
-========================= */
-const CACHE_NAME = "cache-libros-v4";
+﻿
+const CACHE_NAME = "cache-libros-v5";
 const FOTO_CACHE = "foto-perfil-cache-v2";
 
-/* =========================
-   PRECACHE
-========================= */
 const PRECACHE_URLS = [
     "offline.html",
     "index.html",
@@ -38,9 +33,7 @@ const PRECACHE_URLS = [
     "img/notificacion.png"
 ];
 
-/* =========================
-   INSTALL
-========================= */
+
 self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS))
@@ -48,27 +41,28 @@ self.addEventListener("install", event => {
     self.skipWaiting();
 });
 
-/* =========================
-   ACTIVATE
-========================= */
+
 self.addEventListener("activate", event => {
     event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.map(k => {
-                    if (![CACHE_NAME, FOTO_CACHE].includes(k)) {
-                        return caches.delete(k);
-                    }
-                })
-            )
-        )
+        Promise.all([
+            caches.keys().then(keys =>
+                Promise.all(
+                    keys.map(k => {
+                        if (![CACHE_NAME, FOTO_CACHE].includes(k)) {
+                            return caches.delete(k);
+                        }
+                    })
+                )
+            ),
+            self.clients.claim()
+        ])
     );
-    self.clients.claim();
+
+    console.log("SW ACTIVADO:", CACHE_NAME);
 });
 
-/* =========================
-   FETCH
-========================= */
+
+
 self.addEventListener("fetch", event => {
     event.respondWith(handleFetch(event));
 });
@@ -76,18 +70,17 @@ self.addEventListener("fetch", event => {
 async function handleFetch(event) {
     const request = event.request;
 
-    // 🚨 NUNCA INTERCEPTAR PUSH / NOTIFICACIONES
+
     if (request.url.includes("/api/Notificaciones")) {
         return fetch(request.clone());
     }
 
-    // 🚨 NUNCA INTERCEPTAR OPTIONS (CORS preflight)
+
     if (request.method === "OPTIONS") {
         return fetch(request.clone());
     }
 
     /* ===== 1. NAVEGACIÓN HTML (CACHE FIRST REAL) ===== */
-    /* ===== 1. NAVEGACIÓN HTML (NETWORK FIRST) ===== */
     if (request.mode === "navigate") {
         try {
             return await fetch(request);
@@ -110,14 +103,14 @@ async function handleFetch(event) {
         try {
             const response = await fetch(request);
 
-            // ✅ guardar copia fresca para offline
+
             if (response.ok) {
                 cache.put(request, response.clone());
             }
 
             return response;
         } catch {
-            // 📴 offline → usar cache
+
             const cached = await cache.match(request);
             if (cached) return cached;
 
@@ -181,7 +174,6 @@ async function handleFetch(event) {
             const tx = db.transaction("pendientes", "readwrite");
             const store = tx.objectStore("pendientes");
 
-            // 🔁 sobrescribir acción previa
             store.put({
                 idParte,
                 accion,
@@ -266,7 +258,7 @@ async function handleFetch(event) {
 
 
 
-    /* ===== 6. ESTÁTICOS (SOLO GET) ===== */
+ 
     if (request.method === "GET") {
         const cache = await caches.open(CACHE_NAME);
         const cached = await cache.match(request);
@@ -279,13 +271,10 @@ async function handleFetch(event) {
         }
     }
 
-    // 🔴 cualquier POST que llegue aquí → red directa
+ 
     return fetch(request);
 }
 
-/* =========================
-   BACKGROUND SYNC
-========================= */
 self.addEventListener("sync", event => {
     switch (event.tag) {
         case "sync-likes":
@@ -319,9 +308,6 @@ self.addEventListener("message", event => {
 
 
 
-/* =========================
-   DB HELPERS
-========================= */
 function abrirLikesDB() {
     return new Promise(resolve => {
         const req = indexedDB.open("likesDB", 5);
@@ -392,7 +378,6 @@ async function enviarPerfilPendiente() {
         req.onsuccess = () => resolve(req.result);
     });
 
-    // 1️⃣ LEER TODO (solo lectura)
     const pendientes = await new Promise(resolve => {
         const tx = db.transaction("perfilPendiente", "readonly");
         const store = tx.objectStore("perfilPendiente");
@@ -432,7 +417,7 @@ async function enviarPerfilPendiente() {
                     throw new Error("Error subiendo foto de perfil");
                 }
 
-                // limpiar cache
+       
                 const cache = await caches.open(FOTO_CACHE);
                 const keys = await cache.keys();
                 await Promise.all(keys.map(k => cache.delete(k)));
@@ -441,7 +426,6 @@ async function enviarPerfilPendiente() {
 
                 exito = true;
 
-                // ✅ GUARDAR FOTO FINAL LOCAL (PERSISTENTE)
                 const dbFinal = await abrirPerfilDB();
                 const txFinal = dbFinal.transaction("perfil", "readwrite");
                 txFinal.objectStore("perfil").put({
@@ -501,11 +485,9 @@ async function enviarPerfilPendiente() {
 
         } catch (err) {
             console.error("Error enviando perfil:", err);
-            // ❌ NO borrar, se reintentará en el próximo sync
+        
         }
 
-
-        // 2️⃣ BORRAR EN TRANSACCIÓN NUEVA
         if (exito) {
             const txDelete = db.transaction("perfilPendiente", "readwrite");
             txDelete.objectStore("perfilPendiente").delete(item.id);
@@ -587,38 +569,46 @@ self.addEventListener("push", event => {
         };
     }
 
-    const tagUnico = `libro-${data.idLibro}-${Date.now()}`;
+    event.waitUntil((async () => {
+        // 🔥 cerrar notificaciones previas del mismo libro
+        const notificaciones = await self.registration.getNotifications({
+            tag: `libro-${data.idLibro}`
+        });
+        notificaciones.forEach(n => n.close());
 
-    const options = {
-        body: data.mensaje || "",
-        icon: data.portada || "img/logo.png",
-        tag: tagUnico,
-        data: { idLibro: data.idLibro }
-    };
+        const options = {
+            body: data.mensaje || "",
+            icon: data.portada || "img/logo.png",
+            tag: `libro-${data.idLibro}`,
+            renotify: true,
+            data: { idLibro: data.idLibro }
+        };
 
-    event.waitUntil(
-        self.registration.showNotification(data.titulo || "Notificación", options)
-            .then(() => {
-                return self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
-                    clients.forEach(c => {
-                        c.postMessage({
-                            tipo: "RECIBIDA",
-                            titulo: data.titulo,
-                            mensaje: data.mensaje,
-                            idLibro: data.idLibro,
-                            portada: data.portada
-                        });
-                    });
-                });
-            })
-    );
+        await self.registration.showNotification(
+            data.titulo || "Notificación",
+            options
+        );
+
+        const clients = await self.clients.matchAll({ includeUncontrolled: true });
+        clients.forEach(c => {
+            c.postMessage({
+                tipo: "RECIBIDA",
+                titulo: data.titulo,
+                mensaje: data.mensaje,
+                idLibro: data.idLibro,
+                portada: data.portada
+            });
+        });
+    })());
 });
 
 
 
 
+
+
 self.addEventListener("notificationclick", event => {
-    console.log("CLICK NOTI:", event.notification.data); // 👈 AQUÍ
+    console.log("CLICK NOTI:", event.notification.data); 
 
     event.notification.close();
 

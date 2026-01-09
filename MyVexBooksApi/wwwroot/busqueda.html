@@ -214,6 +214,30 @@
             });
         }
 
+        function manejarMensajeSW(event) {
+            if (!event.data) return;
+
+            if (event.data.tipo === "RECIBIDA") {
+                console.log("Push recibida:", event.data);
+
+                // 🔴 marcar que hay notificación pendiente
+                localStorage.setItem("notiPendiente", "1");
+
+                mostrarPuntoRojo();
+            }
+        }
+
+        navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
+        function mostrarPuntoRojo() {
+            const punto = document.getElementById("puntoNuevo");
+            if (punto) punto.style.display = "block";
+        }
+
+        function ocultarPuntoRojo() {
+            const punto = document.getElementById("puntoNuevo");
+            if (punto) punto.style.display = "none";
+        }
+
 
         // navegacion
         function configurarNavegacion() {
@@ -227,11 +251,19 @@
  
         // iniciar
         document.addEventListener("DOMContentLoaded", async () => {
+            if (localStorage.getItem("notiPendiente") === "1") {
+                mostrarPuntoRojo();
+            }
             await cargarGeneros();
             configurarBuscador();
             cargarFotoPerfilHome();
             configurarNavegacion();
         });
+        document.addEventListener("DOMContentLoaded", () => {
+            localStorage.removeItem("hayNotificacion");
+            ocultarPuntito();
+        });
+
     </script>
 </body>
 </html>

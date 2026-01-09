@@ -31,14 +31,13 @@ namespace MyVexBooks.Services
             var correo = dto.Correo.Trim().ToLower();
             var nombre = dto.Nombre.Trim();
 
-            // ✅ Validar duplicado solo en correo
             if (Repository.GetAll().Any(u => u.Correo.ToLower() == correo))
                 throw new InvalidOperationException("El correo ya está registrado");
 
-            // Crear la entidad manualmente
+
             var entidad = new Usuarios
             {
-                Nombre = nombre, // el nombre puede repetirse
+                Nombre = nombre, 
                 Correo = correo,
                 ContraseñaHash = EncriptacionHelper.GetHash(dto.Contraseña),
                 FechaRegistro = DateTime.UtcNow
@@ -50,7 +49,6 @@ namespace MyVexBooks.Services
             }
             catch (Exception ex)
             {
-                // Detectar violación de UNIQUE constraint solo para correo
                 if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE"))
                     throw new InvalidOperationException("El correo ya está registrado.");
 

@@ -269,7 +269,7 @@
                 cont.innerHTML += `
                         <div class="divRB"
                              onclick="window.location.href='libro.html?id=${l.idLibro}'">
-                            <img class="imgRB" src="${l.portadaURL}" >
+                            <img class="imgRB" src="${l.portadaURL}"  >
                             <div class="divBookRB">
                                 <p><b>${l.titulo}</b></p>
                                 <p class="pAutorRB">${l.autor}</p>
@@ -282,48 +282,81 @@
 
         // notis
 
+        function manejarMensajeSW(event) {
+            if (!event.data) return;
+
+            switch (event.data.tipo) {
+                case "RECIBIDA":
+                    console.log("Notificación recibida desde SW:", event.data);
+                    mostrarNotificacionEnPanel(event.data);
+                    break;
+
+                case "FOTO_ACTUALIZADA":
+                    console.log("Foto de perfil actualizada");
+                    cargarFotoPerfilHome();
+                    break;
+
+                default:
+                    console.warn("Mensaje SW no manejado:", event.data);
+            }
+        }
+
+
         async function registrar() {
-            let llave;
+            // 1️⃣ Registrar / obtener el Service Worker activo
+            const registro = await navigator.serviceWorker.register("/sw.js");
 
-            let registro = await navigator.serviceWorker.register("sw.js");
-
+            // 2️⃣ Pedir permiso de notificaciones
             const permission = await Notification.requestPermission();
+            if (permission !== "granted") {
+                console.warn("Permiso de notificaciones denegado");
+                return;
+            }
 
-            if (permission == "granted") {
-                const response = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones/publickey");
-                if (response.ok) {
-                    llave = await response.text();
-                }
+            // 3️⃣ Obtener la public key del servidor
+            const response = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones/publickey");
+            if (!response.ok) {
+                console.error("No se pudo obtener la public key");
+                return;
+            }
 
-                if (llave) {
-                    const subscription = await registro.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(llave)
-                    });
+            const llave = await response.text();
+            if (!llave) return;
 
-                    let response2 = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(subscription)
-                    });
+            // 4️⃣ Revisar si YA existe una suscripción
+            let subscription = await registro.pushManager.getSubscription();
 
-                    if (response2.ok) {
-                        console.log("suscrito a notificaciones");
-                    }
-                }
-                navigator.serviceWorker.addEventListener("message", function (event) {
-                    if (event.data.tipo === "RECIBIDA") {
-                        console.log("Noti recibida:", event.data);
-                        mostrarNotificacionEnPanel(event.data);
-                    }
+            // 5️⃣ Crear solo si no existe
+            if (!subscription) {
+                subscription = await registro.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(llave)
                 });
+                console.log("Nueva suscripción creada");
+            } else {
+                console.log("Suscripción existente reutilizada");
+            }
+
+            // 6️⃣ Enviar suscripción al backend (idempotente)
+            const response2 = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(subscription)
+            });
+
+            if (response2.ok) {
+                console.log("Suscripción registrada en el servidor");
+            } else {
+                console.error("Error registrando suscripción en el servidor");
+            }
+
+            // 7️⃣ Listener del SW (registrar UNA sola vez)
+            navigator.serviceWorker.removeEventListener("message", manejarMensajeSW);
+            navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
+        }
 
 
-            } 
-
-        } 
-
-        // función helper fuera de registrar
+       
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
             const base64 = (base64String + padding)
@@ -345,26 +378,54 @@
             const sinMensajes = document.getElementById("sinMensajes");
             const punto = document.getElementById("puntoNuevo");
 
+            // Ocultar "No hay mensajes nuevos"
             if (sinMensajes) sinMensajes.style.display = "none";
 
+            // Crear div de notificación
             const div = document.createElement("div");
             div.className = "notificacionItem";
+            div.style.display = "flex";
+            div.style.alignItems = "center";
+            div.style.cursor = "pointer";
+            div.style.marginBottom = "6px";
+            div.style.padding = "6px";
+            div.style.borderRadius = "12px";
+            div.style.backgroundColor = "#fff"; // Fondo blanco
+            div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)"; // Sombra ligera
+            div.style.transition = "background 0.2s";
+
+            // Hover efecto
+            div.onmouseover = () => div.style.backgroundColor = "#f5f5f5";
+            div.onmouseleave = () => div.style.backgroundColor = "#fff";
 
             div.innerHTML = `
-        <img src="${portada || 'img/logo.png'}" class="notiPortada" />
-        <div class="notiTexto">
-            <p class="notiTitulo">${titulo}</p>
-            <p class="notiMensaje">${mensaje}</p>
+        <img src="${portada || 'img/logo.png'}" 
+             class="notiPortada" 
+             style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;" />
+        <div class="notiTexto" style="flex:1; style="margin:1;">
+            <p class="notiTitulo" style="margin:0; font-weight:bold; font-size:0.9rem;">${titulo}</p>
+            <p class="notiMensaje" style="margin:0; font-size:0.8rem; color:#555;">${mensaje}</p>
         </div>
     `;
 
-            div.onclick = () => window.location.href = `libro.html?id=${idLibro}`;
+            // Click para ir al libro o home
+            div.onclick = () => {
+                if (idLibro) {
+                    window.location.href = `libro.html?id=${idLibro}`;
+                } else {
+                    window.location.href = "home.html";
+                }
+            };
 
+            // Agregar al inicio de la lista
             lista.prepend(div);
 
-            // mostrar puntito rojo
+            // Mostrar el punto rojo
             if (punto) punto.style.display = "block";
         }
+
+
+
 
 
 
@@ -377,9 +438,7 @@
 
             const fallback = "fotoPerfil/perfil.png";
 
-            /* =========================
-               1️⃣ INTENTAR OFFLINE (IDB)
-            ========================= */
+    
             try {
                 const db = await abrirPerfilDB();
 
@@ -399,16 +458,14 @@
                     const url = URL.createObjectURL(fotoPendiente.blob);
                     img.onload = () => URL.revokeObjectURL(url);
                     img.src = url;
-                    return; // ⛔ no seguir
+                    return;
                 }
 
             } catch (e) {
                 console.warn("No se pudo leer foto offline", e);
             }
 
-            /* =========================
-               2️⃣ ARCHIVO ESTÁTICO
-            ========================= */
+            
             const userId = localStorage.getItem("idUsuario");
             if (!userId) {
                 img.src = fallback;
@@ -419,10 +476,6 @@
             const url = `fotoPerfil/usuario_${userId}.webp${bust}`;
 
             img.src = url;
-
-            /* =========================
-               3️⃣ FALLBACK SEGURO
-            ========================= */
             img.onerror = () => {
                 img.src = fallback;
             };
@@ -462,8 +515,50 @@
             });
         }
 
+        function manejarMensajeSW(event) {
+            if (!event.data) return;
+
+            if (event.data.tipo === "RECIBIDA") {
+                console.log("Push recibida");
+
+                localStorage.setItem(NOTI_KEY, "1");
+                mostrarPuntoRojo();
+            }
+        }
+
+        navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
+
+
+        const NOTI_KEY = "notiPendiente";
+        function mostrarPuntoRojo() {
+            const punto = document.getElementById("puntoNuevo");
+            if (punto) punto.style.display = "block";
+        }
+
+        function ocultarPuntoRojo() {
+            const punto = document.getElementById("puntoNuevo");
+            if (punto) punto.style.display = "none";
+        }
+
+
+        btnNoti.addEventListener("click", () => {
+            const abierto = panelNoti.style.display === "block";
+            panelNoti.style.display = abierto ? "none" : "block";
+
+            if (!abierto) {
+                localStorage.removeItem(NOTI_KEY);
+                ocultarPuntoRojo();
+            }
+        });
+
+
+        
+
 
         document.addEventListener("DOMContentLoaded", async () => {
+            if (localStorage.getItem(NOTI_KEY) === "1") {
+                mostrarPuntoRojo();
+            }
             await cargarGeneros();
             await cargarTopHistorias();
             await cargarProximaLectura();
@@ -472,6 +567,7 @@
             configurarBuscador();
             inicializarCarruseles();
             await registrar()
+          
         });
     </script>
 </body>

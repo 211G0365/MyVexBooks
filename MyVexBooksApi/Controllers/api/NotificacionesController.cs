@@ -57,12 +57,11 @@ namespace MyVexBooks.Controllers.api
         }
 
         [AllowAnonymous]
-        [HttpGet("probar")]
+        [HttpGet("probar2")]
         public async Task<IActionResult> Probar()
         {
             try
             {
-                // Obtener libros recientes (simulado, tomamos uno random de los existentes)
                 var libros = Repository.GetRecientes(10);
                 if (libros == null || !libros.Any())
                     return BadRequest("No hay libros recientes para enviar.");
@@ -71,7 +70,7 @@ namespace MyVexBooks.Controllers.api
                 var random = new Random();
                 var libroRandom = libros[random.Next(libros.Count)];
 
-                // Crear payload de la notificación indicando que es un libro reciente
+
                 var payload = new
                 {
                     titulo = "¡Nuevo libro reciente agregado!",
@@ -82,13 +81,10 @@ namespace MyVexBooks.Controllers.api
           : libroRandom.PortadaUrl
                 };
 
-                // 👇 LOG ESTRATÉGICO (aquí va)
                 Console.WriteLine($"Push enviado → Libro {libroRandom.IdLibro}");
-
-                // Enviar notificación push
                 await Service.EnviarMensaje(payload);
 
-                return Ok(new { mensaje = "Notificación enviada con libro reciente (simulado)", libro = libroRandom.Titulo });
+                return Ok(new { mensaje = "Notificación enviada con libro reciente ", libro = libroRandom.Titulo });
             }
             catch (Exception ex)
             {

@@ -67,7 +67,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseCors("AllowFrontend"); // ?? AQUÍ, no arriba
+app.UseCors("AllowFrontend"); 
 
 app.UseAuthentication();
 app.UseAuthorization();

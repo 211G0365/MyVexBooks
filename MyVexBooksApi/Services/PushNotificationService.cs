@@ -98,7 +98,6 @@ namespace MyVexBooks.Services
 
         public async Task EnviarMensaje(object payload)
         {
-            // Obtener todos los suscriptores activos
             var destinatarios = Repository.GetAll().Where(x => x.Activo == true).ToList();
             Console.WriteLine($"Enviando mensaje a {destinatarios.Count} destinatarios.");
 
@@ -108,13 +107,9 @@ namespace MyVexBooks.Services
                 {
                     var cliente = new WebPushClient();
                     PushSubscription quien = new PushSubscription(d.Endpoint, d.P256dh, d.Auth);
-
-                    // Serializar el payload completo (titulo, mensaje, idLibro, portada, tag)
                     var jsonMessage = JsonSerializer.Serialize(payload);
 
                     await cliente.SendNotificationAsync(quien, jsonMessage, vapid);
-
-                    // Marcar como actualizado (opcional)
                     Repository.Update(d);
 
                     Console.WriteLine($"Mensaje enviado a {d.Endpoint}");
