@@ -127,7 +127,7 @@
 
         async function cargarPerfil() {
 
-            // 1️⃣ leer local
+
             const local = await cargarPerfilLocal();
             if (local) {
                 inputNombre.value = local.nombre || "";
@@ -138,10 +138,10 @@
             }
 
 
-            // 2️⃣ sin red → NO server
+
             if (!navigator.onLine) return;
 
-            // 3️⃣ online
+
             try {
                 const res = await fetch(
                     "https://myvexbooks2.duckdns.org/api/Usuarios/perfil",
@@ -187,12 +187,10 @@
             const img = document.querySelector(".imgPerfil");
             const imgHeader = document.getElementById("perfil");
             const fallback = "fotoPerfil/perfil.png";
-
-            // 1️⃣ intentar offline (IDB)
             const usoOffline = await cargarFotoOfflinePendiente();
             if (usoOffline) return;
 
-            // 2️⃣ archivo estático
+
             const userId = localStorage.getItem("idUsuario");
             if (!userId) {
                 img.src = fallback;
@@ -200,13 +198,23 @@
                 return;
             }
 
-            const url = `fotoPerfil/usuario_${userId}.webp?v=${Date.now()}`;
-            img.src = url;
-            imgHeader.src = url;
 
+            if (navigator.onLine) {
+                const url = `fotoPerfil/usuario_${userId}.webp?t=${Date.now()}`;
+                img.src = url;
+                imgHeader.src = url;
+            } else {
+        
+                const url = `fotoPerfil/usuario_${userId}.webp`;
+                img.src = url;
+                imgHeader.src = url;
+            }
+
+    
             img.onerror = () => img.src = fallback;
             imgHeader.onerror = () => imgHeader.src = fallback;
         }
+
 
 
 
@@ -220,16 +228,12 @@
             const userKey = localStorage.getItem("correoUsuario");
             const fallback = "fotoPerfil/perfil.png";
 
-            /* =========================
-               PREVIEW INMEDIATO
-            ========================= */
+ 
             const previewURL = URL.createObjectURL(archivo);
             imgPerfil.src = previewURL;
             imgHeader.src = previewURL;
 
-            /* =========================
-             OFFLINE → GUARDAR EN IDB (BLOB REAL)
-            ========================= */
+       
             if (!navigator.onLine) {
                 const db = await abrirPerfilDB();
                 const tx = db.transaction("perfilPendiente", "readwrite");
@@ -238,13 +242,13 @@
                 store.add({
                     id: Date.now(),
                     campo: "foto",
-                    blob: archivo,          // ✅ File / Blob REAL
+                    blob: archivo,        
                     type: archivo.type,
                     name: archivo.name,
                     fecha: Date.now()
                 });
 
-                // preview visual local
+          
 
 
                 if ("serviceWorker" in navigator && "SyncManager" in window) {
@@ -258,9 +262,6 @@
 
 
 
-            /* =========================
-               ONLINE → SUBIR NORMAL
-            ========================= */
             try {
                 const formData = new FormData();
                 formData.append("foto", archivo);
@@ -284,12 +285,10 @@
                         ? data.fotoURL
                         : "https://myvexbooks2.duckdns.org" + data.fotoURL;
                 } else {
-                    // fallback: usar ruta estática conocida
                     const userId = localStorage.getItem("idUsuario");
                     nuevaFoto = `fotoPerfil/usuario_${userId}.webp`;
                 }
 
-                // refresco visual directo (archivo estático)
                 const userId = localStorage.getItem("idUsuario");
                 const bust = `?t=${Date.now()}`;
 
@@ -446,7 +445,7 @@
 
             for (const item of todos) {
                 if (item.campo === campo) {
-                    store.delete(item.id); // elimina el anterior
+                    store.delete(item.id); 
                 }
             }
 
@@ -568,8 +567,14 @@
         document.getElementById("btnNoti").addEventListener("click", () => {
             const panel = document.getElementById("panelNoti");
             const punto = document.getElementById("puntoNuevo");
-            panel.style.display = panel.style.display === "block" ? "none" : "block";
-            if (punto.style.display === "block") punto.style.display = "none";
+            const isAbierto = panel.style.display === "block";
+            panel.style.display = isAbierto ? "none" : "block";
+
+           
+            if (!isAbierto) {
+                localStorage.setItem("notiPendientes", "false");
+                if (punto) punto.style.display = "none";
+            }
         });
 
         document.addEventListener("click", (e) => {
@@ -590,14 +595,12 @@
                 localStorage.removeItem("correoUsuario");
                 localStorage.removeItem("fotoPerfilURL_" + userKey);
 
-                // Borrar perfil de IndexedDB
                 const db = await abrirPerfilDB();
                 const tx = db.transaction("perfil", "readwrite");
                 tx.objectStore("perfil").delete("perfil");
 
 
                 window.location.href = "index.html?ts=" + Date.now();
-                // Dentro de cerrar sesión
                 const fotoCache = await caches.open("foto-perfil-cache-v2");
                 fotoCache.keys().then(keys => {
                     keys.forEach(k => fotoCache.delete(k));
@@ -723,11 +726,218 @@
         document.getElementById("btnNotiMovil").onclick = () => window.location.href = "notificaciones.html";
 
 
+        //notis
+        function manejarMensajeSW(event) {
+            if (!event.data) return;
 
-      
+            switch (event.data.tipo) {
+                case "RECIBIDA":
+                    console.log("Notificación recibida desde SW:", event.data);
+
+                 
+                    const puntoPC = document.getElementById("puntoNuevo");
+                    if (puntoPC) puntoPC.style.display = "block";
+
+
+                    marcarPuntoRojoMovil();
+
+                    const notisGuardadas = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                    const existe = notisGuardadas.some(n =>
+                        n.titulo === event.data.titulo &&
+                        n.mensaje === event.data.mensaje &&
+                        n.idLibro === event.data.idLibro
+                    );
+                    if (!existe) {
+                        notisGuardadas.unshift(event.data);
+                        localStorage.setItem("notificaciones", JSON.stringify(notisGuardadas));
+                    }
+                    break;
+
+                case "FOTO_ACTUALIZADA":
+                    cargarFotoPerfilHome();
+                    break;
+
+                default:
+                    console.warn("Mensaje SW no manejado:", event.data);
+            }
+        }
+
+
+        async function registrar() {
+            try {
+                if (!("serviceWorker" in navigator)) return;
+
+                const registro = await navigator.serviceWorker.register("/sw.js");
+
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") return;
+
+                const response = await fetch(
+                    "https://myvexbooks2.duckdns.org/api/notificaciones/publickey"
+                );
+
+                if (!response.ok) throw new Error("No se pudo obtener la public key");
+
+                const llave = await response.text();
+                if (!llave) return;
+
+                let subscription = await registro.pushManager.getSubscription();
+
+                if (!subscription) {
+                    subscription = await registro.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(llave)
+                    });
+                }
+
+                await fetch("https://myvexbooks2.duckdns.org/api/notificaciones", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(subscription)
+                });
+
+                navigator.serviceWorker.removeEventListener("message", manejarMensajeSW);
+                navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
+
+            } catch (err) {
+                console.warn("Registro de notificaciones omitido:", err.message);
+            }
+        }
+
+
+
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        function mostrarNotificacionEnPanel({ titulo, mensaje, idLibro, portada }, guardar = true) {
+            const lista = document.getElementById("listaMensajes");
+            const sinMensajes = document.getElementById("sinMensajes");
+            const punto = document.getElementById("puntoNuevo");
+
+            if (!lista) return;
+            if (sinMensajes) sinMensajes.style.display = "none";
+
+            const div = document.createElement("div");
+            div.className = "notificacionItem";
+            div.style.display = "flex";
+            div.style.alignItems = "center";
+            div.style.cursor = "pointer";
+            div.style.marginBottom = "6px";
+            div.style.padding = "6px";
+            div.style.borderRadius = "12px";
+            div.style.backgroundColor = "#fff";
+            div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+            div.style.transition = "background 0.2s";
+            div.onmouseover = () => div.style.backgroundColor = "#f5f5f5";
+            div.onmouseleave = () => div.style.backgroundColor = "#fff";
+
+            div.innerHTML = `
+        <img src="${portada || 'img/logo.png'}" 
+             class="notiPortada" 
+             style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;" />
+        <div class="notiTexto" style="flex:1; margin:1px;">
+            <p class="notiTitulo" style="margin:0; font-weight:bold; font-size:0.9rem;">${titulo}</p>
+            <p class="notiMensaje" style="margin:0; font-size:0.8rem; color:#555;">${mensaje}</p>
+        </div>
+    `;
+
+            div.onclick = () => {
+
+                if (idLibro) {
+                    let notis = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                    notis = notis.filter(n => n.idLibro !== idLibro);
+                    localStorage.setItem("notificaciones", JSON.stringify(notis));
+                }
+
+                localStorage.setItem("notiPendientes", "false");
+                if (punto) punto.style.display = "none";
+
+
+                if (idLibro) window.location.href = `libro.html?id=${idLibro}`;
+                else window.location.href = "home.html";
+            };
+            lista.prepend(div);
+
+            if (guardar) {
+                const notisGuardadas = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                const existe = notisGuardadas.some(n => n.titulo === titulo && n.mensaje === mensaje && n.idLibro === idLibro);
+                if (!existe) {
+                    notisGuardadas.unshift({ titulo, mensaje, idLibro, portada });
+                    localStorage.setItem("notificaciones", JSON.stringify(notisGuardadas));
+                }
+
+                if (punto) {
+                    punto.style.display = "block";
+                    localStorage.setItem("notiPendientes", "true");
+                }
+            }
+        }
+
+        function restaurarNotificacionesGuardadas() {
+            const lista = document.getElementById("listaMensajes");
+            const sinMensajes = document.getElementById("sinMensajes");
+            if (!lista) return;
+
+            const notis = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+            lista.innerHTML = "";
+
+            if (notis.length === 0) {
+                if (sinMensajes) sinMensajes.style.display = "block";
+                return;
+            } else {
+                if (sinMensajes) sinMensajes.style.display = "none";
+            }
+
+            notis.forEach(noti => mostrarNotificacionEnPanel(noti, false)); 
+        }
+
+
+
+        function marcarNotificacionesPendientes() {
+            localStorage.setItem("notiPendientes", "true");
+        }
+
+
+        function restaurarEstadoNotificaciones() {
+            const puntoPC = document.getElementById("puntoNuevo");
+            const puntoMovil = document.getElementById("puntoNuevoMovil");
+            const pendientes = localStorage.getItem("notiPendientes") === "true";
+
+            if (puntoPC) puntoPC.style.display = pendientes ? "block" : "none";
+            if (puntoMovil) puntoMovil.style.display = pendientes ? "block" : "none";
+        }
+
+        function marcarPuntoRojoMovil() {
+            const puntoMovil = document.getElementById("puntoNuevoMovil");
+            if (puntoMovil) puntoMovil.style.display = "block";
+            localStorage.setItem("notiPendientes", "true");
+        }
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                navigator.serviceWorker.removeEventListener("message", manejarMensajeSW);
+                navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
+            });
+        }
         
 
         document.addEventListener("DOMContentLoaded", async () => {
+            await registrar();
+            restaurarEstadoNotificaciones();
+            restaurarNotificacionesGuardadas();
             await cargarFotoPerfil();
             await cargarPerfil();
             await cargarGeneros();

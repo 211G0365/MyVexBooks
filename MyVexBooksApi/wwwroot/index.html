@@ -64,7 +64,6 @@
         }
 
 
-        // Conversión clave VAPID
         function urlB64ToUint8Array(base64String) {
             const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
             const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
@@ -129,7 +128,6 @@
 
                 localStorage.setItem("correoUsuario", correo);
 
-                // 🔑 enviar token al SW
                 if ("serviceWorker" in navigator) {
                     navigator.serviceWorker.ready.then(reg => {
                         reg.active?.postMessage({

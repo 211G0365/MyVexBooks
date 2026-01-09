@@ -35,6 +35,7 @@
 html, body {
     min-height: 100%;
     width: 100%;
+    height:100%;
     padding: 0;
     margin: 0;
 }
@@ -1302,7 +1303,15 @@ body {
 /* ============================================== */
 .mainNotificaciones {
     width: 100%;
+    min-height: calc(100vh - 120px);
+    /* 60px header + 60px navMovil */
+
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
+
 
 .menuNotificacionesC {
     background: #C79D85;
@@ -1310,6 +1319,9 @@ body {
     height: auto;
     top: 65px;
     border: 2px solid #5C2603;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
     .menuNotificacionesC h3 {

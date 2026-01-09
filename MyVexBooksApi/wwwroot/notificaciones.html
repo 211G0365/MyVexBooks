@@ -35,51 +35,30 @@
     </nav>
     
     <script>
+
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js")
                 .then(() => console.log("SW registrado"))
-                .catch(err => console.error(err));
+                .catch(err => console.error("Error registrando SW:", err));
         }
+
 
         const token = localStorage.getItem("token");
         if (!token) window.location.href = "index.html";
 
-        const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${token}` };
-
-        // Navegacion de paginas
-        document.getElementById("perfil").onclick = function () {
-            window.location.href = "perfil.html";
-        }
-
-        document.getElementById("logo").onclick = function () {
-            window.location.href = "home.html";
-        }
-
-        // Navegación móvil
-        document.getElementById("btnHomeMovil").onclick = () => {
-            window.location.href = "home.html";
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
         };
 
-        document.getElementById("btnBuscarMovil").onclick = () => {
-            window.location.href = "busqueda.html";
-        };
-
-        document.getElementById("btnNotiMovil").onclick = () => {
-            window.location.href = "notificaciones.html";
-        };
-
-        async function cargarFotoPerfilHome() {
+        async function cargarFotoPerfil() {
             const img = document.getElementById("perfil");
             if (!img) return;
 
             const fallback = "fotoPerfil/perfil.png";
 
-            /* =========================
-               1️⃣ INTENTAR OFFLINE (IDB)
-            ========================= */
             try {
                 const db = await abrirPerfilDB();
-
                 const pendientes = await new Promise(res => {
                     const tx = db.transaction("perfilPendiente", "readonly");
                     const store = tx.objectStore("perfilPendiente");
@@ -96,16 +75,13 @@
                     const url = URL.createObjectURL(fotoPendiente.blob);
                     img.onload = () => URL.revokeObjectURL(url);
                     img.src = url;
-                    return; // ⛔ no seguir
+                    return;
                 }
 
             } catch (e) {
                 console.warn("No se pudo leer foto offline", e);
             }
 
-            /* =========================
-               2️⃣ ARCHIVO ESTÁTICO
-            ========================= */
             const userId = localStorage.getItem("idUsuario");
             if (!userId) {
                 img.src = fallback;
@@ -114,81 +90,102 @@
 
             const bust = navigator.onLine ? `?t=${Date.now()}` : "";
             const url = `fotoPerfil/usuario_${userId}.webp${bust}`;
-
             img.src = url;
-
-            /* =========================
-               3️⃣ FALLBACK SEGURO
-            ========================= */
-            img.onerror = () => {
-                img.src = fallback;
-            };
-        }
-        window.addEventListener("online", async () => {
-            await cargarFotoPerfilHome();
-        });
-
-
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.active?.postMessage({ tipo: "FORZAR_CACHE_LIMPIO" });
-            });
+            img.onerror = () => img.src = fallback;
         }
 
         function abrirPerfilDB() {
             return new Promise((resolve, reject) => {
                 const req = indexedDB.open("perfilDB", 4);
-
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
-
-                    if (!db.objectStoreNames.contains("perfil")) {
-                        db.createObjectStore("perfil", { keyPath: "id" });
-                    }
-
-                    if (!db.objectStoreNames.contains("perfilPendiente")) {
-                        db.createObjectStore("perfilPendiente", {
-                            keyPath: "id",
-                            autoIncrement: true
-                        });
-                    }
+                    if (!db.objectStoreNames.contains("perfil")) db.createObjectStore("perfil", { keyPath: "id" });
+                    if (!db.objectStoreNames.contains("perfilPendiente")) db.createObjectStore("perfilPendiente", { keyPath: "id", autoIncrement: true });
                 };
-
                 req.onsuccess = () => resolve(req.result);
                 req.onerror = () => reject(req.error);
             });
         }
-        // Función para mostrar una notificación en la lista
-        function mostrarNotificacionEnPanel({ titulo, mensaje, idLibro, portada }) {
+
+        function mostrarNotificacionEnPanel({ titulo, mensaje, idLibro, portada }, guardar = true) {
             const lista = document.getElementById("listaMensajes");
             const sinMensajes = document.getElementById("sinMensajes");
+            const punto = document.getElementById("puntoNuevo");
 
+            if (!lista) return;
             if (sinMensajes) sinMensajes.style.display = "none";
 
             const div = document.createElement("div");
             div.className = "notificacionItem";
+            div.style.display = "flex";
+            div.style.alignItems = "center";
+            div.style.cursor = "pointer";
+            div.style.marginBottom = "6px";
+            div.style.padding = "6px";
+            div.style.borderRadius = "12px";
+            div.style.backgroundColor = "#fff";
+            div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+            div.onmouseover = () => div.style.backgroundColor = "#f5f5f5";
+            div.onmouseleave = () => div.style.backgroundColor = "#fff";
 
             div.innerHTML = `
-        <img src="${portada || 'img/logo.png'}" class="notiPortada" />
-        <div class="notiTexto">
-            <p class="notiTitulo">${titulo}</p>
-            <p class="notiMensaje">${mensaje}</p>
+        <img src="${portada || 'img/logo.png'}" 
+             class="notiPortada" 
+             style="width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:10px;">
+        <div class="notiTexto" style="flex:1;margin:1px;">
+            <p class="notiTitulo" style="margin:0;font-weight:bold;font-size:0.9rem;">${titulo}</p>
+            <p class="notiMensaje" style="margin:0;font-size:0.8rem;color:#555;">${mensaje}</p>
         </div>
     `;
 
             div.onclick = () => {
+          
                 if (idLibro) {
-                    window.location.href = `libro.html?id=${idLibro}`;
-                } else {
-                    window.location.href = "home.html";
+                    let notis = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                    notis = notis.filter(n => n.idLibro !== idLibro);
+                    localStorage.setItem("notificaciones", JSON.stringify(notis));
                 }
+
+                localStorage.setItem("notiPendientes", "false");
+                if (punto) punto.style.display = "none";
+
+                if (idLibro) window.location.href = `libro.html?id=${idLibro}`;
+                else window.location.href = "home.html";
             };
 
             lista.prepend(div);
+
+            if (guardar) {
+                const notisGuardadas = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                const existe = notisGuardadas.some(n => n.titulo === titulo && n.mensaje === mensaje && n.idLibro === idLibro);
+                if (!existe) {
+                    notisGuardadas.unshift({ titulo, mensaje, idLibro, portada });
+                    localStorage.setItem("notificaciones", JSON.stringify(notisGuardadas));
+                }
+                if (punto) {
+                    punto.style.display = "block";
+                    localStorage.setItem("notiPendientes", "true");
+                }
+            }
         }
 
-        // Registrar y recibir notificaciones desde el SW
-        async function registrarNotificacionesMovil() {
+        function restaurarNotificacionesGuardadas() {
+            const lista = document.getElementById("listaMensajes");
+            const sinMensajes = document.getElementById("sinMensajes");
+            if (!lista) return;
+
+            const notis = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+            lista.innerHTML = "";
+
+            if (notis.length === 0) {
+                if (sinMensajes) sinMensajes.style.display = "block";
+                return;
+            } else if (sinMensajes) sinMensajes.style.display = "none";
+
+            notis.forEach(noti => mostrarNotificacionEnPanel(noti, false));
+        }
+
+        async function registrarNotificaciones() {
             if (!("serviceWorker" in navigator)) return;
 
             const reg = await navigator.serviceWorker.ready;
@@ -196,10 +193,14 @@
             if (permiso !== "granted") return;
 
             const publicKey = await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones/publickey").then(r => r.text());
-            const subscription = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicKey)
-            });
+            let subscription = await reg.pushManager.getSubscription();
+            if (!subscription) {
+                subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+                console.log("Nueva suscripción creada");
+            }
 
             await fetch("https://myvexbooks2.duckdns.org/api/Notificaciones", {
                 method: "POST",
@@ -207,11 +208,9 @@
                 body: JSON.stringify(subscription)
             });
 
-            navigator.serviceWorker.addEventListener("message", (event) => {
-                if (event.data.tipo === "RECIBIDA") {
-                    mostrarNotificacionEnPanel(event.data);
-                }
-            });
+
+            navigator.serviceWorker.removeEventListener("message", manejarMensajeSW);
+            navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
         }
 
         function urlBase64ToUint8Array(base64String) {
@@ -221,15 +220,45 @@
             return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
         }
 
-        // Inicialización
+        function manejarMensajeSW(event) {
+            if (!event.data) return;
+
+            switch (event.data.tipo) {
+                case "RECIBIDA":
+                    mostrarNotificacionEnPanel(event.data);
+                    break;
+                case "FOTO_ACTUALIZADA":
+                    cargarFotoPerfil();
+                    break;
+                default:
+                    console.warn("Mensaje SW no manejado:", event.data);
+            }
+        }
+
+
+        function restaurarEstadoNotificaciones() {
+            const punto = document.getElementById("puntoNuevo");
+            const pendientes = localStorage.getItem("notiPendientes") === "true";
+            if (punto) punto.style.display = pendientes ? "block" : "none";
+        }
+
+
+        function configurarNavegacion() {
+            document.getElementById("perfil").onclick = () => window.location.href = "perfil.html";
+            document.getElementById("logo").onclick = () => window.location.href = "home.html";
+            document.getElementById("btnHomeMovil").onclick = () => window.location.href = "home.html";
+            document.getElementById("btnBuscarMovil").onclick = () => window.location.href = "busqueda.html";
+            document.getElementById("btnNotiMovil").onclick = () => window.location.href = "notificaciones.html";
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
-            cargarFotoPerfilHome();
-            await registrarNotificacionesMovil();
+            configurarNavegacion(); 
+            restaurarEstadoNotificaciones();
+            restaurarNotificacionesGuardadas();
+            await cargarFotoPerfil();
+            await registrarNotificaciones();
         });
 
-
-
-   
 
     </script>
 </body>

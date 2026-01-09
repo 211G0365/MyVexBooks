@@ -70,7 +70,7 @@
         <img src="img/busqueda.png" id="btnBuscarMovil">
         <div class="iconoCampanaC">
             <img src="img/notificacion.png" id="btnNotiMovil">
-            <span class="puntoRojo" id="puntoNuevo"></span>
+            <span class="puntoRojo" id="puntoNuevoMovil"></span>
         </div>
     </nav>
 
@@ -164,9 +164,11 @@
                 panelNoti.style.display = isAbierto ? "none" : "block";
 
                 if (!isAbierto) {
+                    localStorage.setItem("notiPendientes", "false");
                     puntoNuevo.style.display = "none";
                 }
             });
+
 
 
             document.addEventListener("click", (e) => {
@@ -287,12 +289,32 @@
 
             switch (event.data.tipo) {
                 case "RECIBIDA":
-                    console.log("Notificación recibida desde SW:", event.data);
-                    mostrarNotificacionEnPanel(event.data);
+                    const notisGuardadas = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                    const existe = notisGuardadas.some(n =>
+                        n.titulo === event.data.titulo &&
+                        n.mensaje === event.data.mensaje &&
+                        n.idLibro === event.data.idLibro
+                    );
+
+                    if (!existe) {
+                        notisGuardadas.unshift(event.data);
+                        localStorage.setItem("notificaciones", JSON.stringify(notisGuardadas));
+                    }
+
+                    localStorage.setItem("notiPendientes", "true");
+                    const puntoPC = document.getElementById("puntoNuevo");
+                    if (puntoPC) puntoPC.style.display = "block";
+
+                    const puntoMovil = document.getElementById("puntoNuevoMovil");
+                    if (puntoMovil) puntoMovil.style.display = "block";
+
+                    const pagina = window.location.pathname.split("/").pop();
+                    if (pagina === "notificaciones.html") {
+                        mostrarNotificacionEnPanel(event.data);
+                    }
                     break;
 
                 case "FOTO_ACTUALIZADA":
-                    console.log("Foto de perfil actualizada");
                     cargarFotoPerfilHome();
                     break;
 
@@ -301,19 +323,30 @@
             }
         }
 
+        btnNotiMovil.onclick = () => {
+            localStorage.setItem("notiPendientes", "false");
+            restaurarEstadoNotificaciones(); 
+            window.location.href = "notificaciones.html";
+        };
+
+        function marcarPuntoRojoMovil() {
+            const puntoMovil = document.getElementById("puntoNuevoMovil");
+            if (puntoMovil) puntoMovil.style.display = "block";
+        }
+
+
+
+
 
         async function registrar() {
-            // 1️⃣ Registrar / obtener el Service Worker activo
-            const registro = await navigator.serviceWorker.register("/sw.js");
 
-            // 2️⃣ Pedir permiso de notificaciones
+            const registro = await navigator.serviceWorker.register("/sw.js");
             const permission = await Notification.requestPermission();
             if (permission !== "granted") {
                 console.warn("Permiso de notificaciones denegado");
                 return;
             }
 
-            // 3️⃣ Obtener la public key del servidor
             const response = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones/publickey");
             if (!response.ok) {
                 console.error("No se pudo obtener la public key");
@@ -323,10 +356,8 @@
             const llave = await response.text();
             if (!llave) return;
 
-            // 4️⃣ Revisar si YA existe una suscripción
+   
             let subscription = await registro.pushManager.getSubscription();
-
-            // 5️⃣ Crear solo si no existe
             if (!subscription) {
                 subscription = await registro.pushManager.subscribe({
                     userVisibleOnly: true,
@@ -337,7 +368,6 @@
                 console.log("Suscripción existente reutilizada");
             }
 
-            // 6️⃣ Enviar suscripción al backend (idempotente)
             const response2 = await fetch("https://myvexbooks2.duckdns.org/api/notificaciones", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -350,7 +380,6 @@
                 console.error("Error registrando suscripción en el servidor");
             }
 
-            // 7️⃣ Listener del SW (registrar UNA sola vez)
             navigator.serviceWorker.removeEventListener("message", manejarMensajeSW);
             navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
         }
@@ -373,15 +402,15 @@
         }
 
 
-        function mostrarNotificacionEnPanel({ titulo, mensaje, idLibro, portada }) {
+        function mostrarNotificacionEnPanel({ titulo, mensaje, idLibro, portada }, guardar = true) {
             const lista = document.getElementById("listaMensajes");
             const sinMensajes = document.getElementById("sinMensajes");
             const punto = document.getElementById("puntoNuevo");
 
-            // Ocultar "No hay mensajes nuevos"
+            if (!lista) return;
+
             if (sinMensajes) sinMensajes.style.display = "none";
 
-            // Crear div de notificación
             const div = document.createElement("div");
             div.className = "notificacionItem";
             div.style.display = "flex";
@@ -390,11 +419,9 @@
             div.style.marginBottom = "6px";
             div.style.padding = "6px";
             div.style.borderRadius = "12px";
-            div.style.backgroundColor = "#fff"; // Fondo blanco
-            div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)"; // Sombra ligera
+            div.style.backgroundColor = "#fff";
+            div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
             div.style.transition = "background 0.2s";
-
-            // Hover efecto
             div.onmouseover = () => div.style.backgroundColor = "#f5f5f5";
             div.onmouseleave = () => div.style.backgroundColor = "#fff";
 
@@ -402,34 +429,64 @@
         <img src="${portada || 'img/logo.png'}" 
              class="notiPortada" 
              style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;" />
-        <div class="notiTexto" style="flex:1; style="margin:1;">
+        <div class="notiTexto" style="flex:1; margin:1px;">
             <p class="notiTitulo" style="margin:0; font-weight:bold; font-size:0.9rem;">${titulo}</p>
             <p class="notiMensaje" style="margin:0; font-size:0.8rem; color:#555;">${mensaje}</p>
         </div>
     `;
 
-            // Click para ir al libro o home
             div.onclick = () => {
+
                 if (idLibro) {
-                    window.location.href = `libro.html?id=${idLibro}`;
-                } else {
-                    window.location.href = "home.html";
+                    let notis = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                    notis = notis.filter(n => n.idLibro !== idLibro);
+                    localStorage.setItem("notificaciones", JSON.stringify(notis));
                 }
+                localStorage.setItem("notiPendientes", "false");
+                if (punto) punto.style.display = "none";
+
+                if (idLibro) window.location.href = `libro.html?id=${idLibro}`;
+                else window.location.href = "home.html";
             };
 
-            // Agregar al inicio de la lista
             lista.prepend(div);
 
-            // Mostrar el punto rojo
-            if (punto) punto.style.display = "block";
+
+            if (guardar) {
+                const notisGuardadas = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+                const existe = notisGuardadas.some(n => n.titulo === titulo && n.mensaje === mensaje && n.idLibro === idLibro);
+                if (!existe) {
+                    notisGuardadas.unshift({ titulo, mensaje, idLibro, portada });
+                    localStorage.setItem("notificaciones", JSON.stringify(notisGuardadas));
+                }
+
+                if (punto) {
+                    punto.style.display = "block";
+                    localStorage.setItem("notiPendientes", "true");
+                }
+            }
         }
 
 
 
 
+        function restaurarNotificacionesGuardadas() {
+            const lista = document.getElementById("listaMensajes");
+            const sinMensajes = document.getElementById("sinMensajes");
+            if (!lista) return;
 
+            const notis = JSON.parse(localStorage.getItem("notificaciones") || "[]");
+            lista.innerHTML = "";
 
+            if (notis.length === 0) {
+                if (sinMensajes) sinMensajes.style.display = "block";
+                return;
+            } else {
+                if (sinMensajes) sinMensajes.style.display = "none";
+            }
 
+            notis.forEach(noti => mostrarNotificacionEnPanel(noti, false)); 
+        }
 
         
         async function cargarFotoPerfilHome() {
@@ -514,51 +571,29 @@
                 req.onerror = () => reject(req.error);
             });
         }
-
-        function manejarMensajeSW(event) {
-            if (!event.data) return;
-
-            if (event.data.tipo === "RECIBIDA") {
-                console.log("Push recibida");
-
-                localStorage.setItem(NOTI_KEY, "1");
-                mostrarPuntoRojo();
-            }
+        function marcarNotificacionesPendientes() {
+            localStorage.setItem("notiPendientes", "true");
         }
 
-        navigator.serviceWorker.addEventListener("message", manejarMensajeSW);
+        function restaurarEstadoNotificaciones() {
+            const puntoPC = document.getElementById("puntoNuevo");
+            const puntoMovil = document.getElementById("puntoNuevoMovil");
 
 
-        const NOTI_KEY = "notiPendiente";
-        function mostrarPuntoRojo() {
-            const punto = document.getElementById("puntoNuevo");
-            if (punto) punto.style.display = "block";
-        }
+            const pendientes = localStorage.getItem("notiPendientes") === "true";
 
-        function ocultarPuntoRojo() {
-            const punto = document.getElementById("puntoNuevo");
-            if (punto) punto.style.display = "none";
+            if (puntoPC) puntoPC.style.display = pendientes ? "block" : "none";
+            if (puntoMovil) puntoMovil.style.display = pendientes ? "block" : "none";
         }
 
 
-        btnNoti.addEventListener("click", () => {
-            const abierto = panelNoti.style.display === "block";
-            panelNoti.style.display = abierto ? "none" : "block";
-
-            if (!abierto) {
-                localStorage.removeItem(NOTI_KEY);
-                ocultarPuntoRojo();
-            }
-        });
-
-
-        
-
+     
+       
+      
 
         document.addEventListener("DOMContentLoaded", async () => {
-            if (localStorage.getItem(NOTI_KEY) === "1") {
-                mostrarPuntoRojo();
-            }
+            restaurarEstadoNotificaciones();
+            restaurarNotificacionesGuardadas();
             await cargarGeneros();
             await cargarTopHistorias();
             await cargarProximaLectura();
@@ -566,9 +601,17 @@
             configurarEventosEstaticos();
             configurarBuscador();
             inicializarCarruseles();
-            await registrar()
-          
+            await registrar();
+
+
+            const btnNotiMovil = document.getElementById("btnNotiMovil");
+            btnNotiMovil.onclick = () => {
+                localStorage.setItem("notiPendientes", "false");
+                restaurarEstadoNotificaciones();
+                window.location.href = "notificaciones.html";
+            };
         });
+
     </script>
 </body>
 </html>

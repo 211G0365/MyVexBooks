@@ -80,7 +80,7 @@ async function handleFetch(event) {
         return fetch(request.clone());
     }
 
-    /* ===== 1. NAVEGACIÓN HTML (CACHE FIRST REAL) ===== */
+
     if (request.mode === "navigate") {
         try {
             return await fetch(request);
@@ -92,7 +92,7 @@ async function handleFetch(event) {
 
    
 
-    /* ===== API PARTE (NETWORK FIRST + CACHE) ===== */
+
     if (
         request.method === "GET" &&
         request.url.includes("/api/Libros/parte/") &&
@@ -122,7 +122,7 @@ async function handleFetch(event) {
     }
 
 
-    /* ===== 2. API GET (CACHE FIRST) ===== */
+
     if (
         request.method === "GET" &&
         request.url.includes("/api/") &&
@@ -156,7 +156,6 @@ async function handleFetch(event) {
     }
 
 
-    /* ===== 3. LIKE OFFLINE ===== */
     if (request.method === "POST" && request.url.includes("/like")) {
         try {
             return await fetch(request);
@@ -193,7 +192,7 @@ async function handleFetch(event) {
 
 
 
-    /* ===== 4. PERFIL PUT OFFLINE ===== */
+
     if (
         request.method === "PUT" &&
         (
@@ -304,6 +303,13 @@ self.addEventListener("message", event => {
     if (event.data?.tipo === "SYNC_LIKES") {
         event.waitUntil(enviarLikesPendientes());
     }
+    if (event.data?.tipo === "LIKE_CAMBIO") {
+        self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
+            clients.forEach(client => {
+                client.postMessage(event.data);
+            });
+        });
+    }
 });
 
 
@@ -391,7 +397,7 @@ async function enviarPerfilPendiente() {
         let exito = false;
 
         try {
-            /* ===== FOTO PERFIL ===== */
+      
             if (item.campo === "foto") {
                 const formData = new FormData();
 
@@ -449,7 +455,7 @@ async function enviarPerfilPendiente() {
 
 
 
-            /* ===== TEXTO ===== */
+    
             if (item.campo === "nombre" || item.campo === "correo") {
                 const url =
                     item.campo === "nombre"
@@ -535,7 +541,6 @@ async function enviarLikesPendientes() {
             });
 
             if (!resp.ok) throw new Error("Error enviando like");
-            // 🧹 limpiar cache de la parte
             const cache = await caches.open(CACHE_NAME);
             const keys = await cache.keys();
 
@@ -545,7 +550,6 @@ async function enviarLikesPendientes() {
                     .map(r => cache.delete(r))
             );
 
-            // ✅ borrar si fue exitoso
             const tx = db.transaction("pendientes", "readwrite");
             tx.objectStore("pendientes").delete(item.idParte);
 
@@ -570,7 +574,6 @@ self.addEventListener("push", event => {
     }
 
     event.waitUntil((async () => {
-        // 🔥 cerrar notificaciones previas del mismo libro
         const notificaciones = await self.registration.getNotifications({
             tag: `libro-${data.idLibro}`
         });

@@ -66,7 +66,7 @@ namespace MyVexBooks.Controllers.api
                 if (libros == null || !libros.Any())
                     return BadRequest("No hay libros recientes para enviar.");
 
-                // Seleccionar libro random
+
                 var random = new Random();
                 var libroRandom = libros[random.Next(libros.Count)];
 
